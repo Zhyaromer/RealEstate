@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'auth_service.dart';
 import 'auth_widgets.dart';
 
 class VerifyEmailPage extends StatefulWidget {
-  const VerifyEmailPage({super.key});
+  const VerifyEmailPage({super.key, this.email});
+
+  final String? email;
 
   @override
   State<VerifyEmailPage> createState() => _VerifyEmailPageState();
@@ -12,26 +15,49 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   bool _isLoading = false;
 
   Future<void> _handleVerified() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      setState(() => _isLoading = true);
+      final isVerified = await AuthService.checkEmailVerified();
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    Navigator.pushReplacementNamed(context, '/dashboard');
+      if (!mounted) return;
+      if (isVerified) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        _showMessage('Your email is not verified yet.', Colors.orange);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage(AuthService.friendlyError(error), Colors.red);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  void _resendEmail(String email) {
+  Future<void> _resendEmail(String email) async {
+    try {
+      setState(() => _isLoading = true);
+      await AuthService.resendVerificationEmail();
+
+      if (!mounted) return;
+      _showMessage('Verification email resent to $email', Colors.green);
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage(AuthService.friendlyError(error), Colors.red);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showMessage(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Verification email resent to $email'),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: color),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final email = ModalRoute.of(context)?.settings.arguments as String?;
+    final routeEmail = ModalRoute.of(context)?.settings.arguments as String?;
+    final email = widget.email ?? routeEmail;
 
     return AuthScaffold(
       title: 'Verify Email',
@@ -95,9 +121,13 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
           TextButton.icon(
             onPressed: _isLoading
                 ? null
-                : () => Navigator.pushReplacementNamed(context, '/signup'),
+                : () async {
+                    await AuthService.signOut();
+                    if (!context.mounted) return;
+                    Navigator.pushReplacementNamed(context, '/login');
+                  },
             icon: const Icon(Icons.arrow_back_rounded),
-            label: const Text('Back'),
+            label: const Text('Back to Login'),
           ),
         ],
       ),

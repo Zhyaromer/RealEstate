@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'auth_service.dart';
 import 'auth_widgets.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -35,12 +36,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      setState(() => _isLoading = true);
+      await AuthService.sendPasswordResetEmail(email);
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    _showMessage('Password reset link sent to $email', Colors.green);
+      if (!mounted) return;
+      _showMessage('Password reset link sent to $email', Colors.green);
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage(AuthService.friendlyError(error), Colors.red);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showMessage(String message, Color color) {

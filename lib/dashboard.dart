@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
+import 'auth_service.dart';
 import 'loan_applications.dart';
 import 'models.dart';
 import 'my_properties.dart';
@@ -17,6 +18,14 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    AuthService.loadCurrentUserProfile().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -456,6 +465,8 @@ class _DashboardPageState extends State<DashboardPage> {
     );
 
     if (shouldLogout == true && context.mounted) {
+      await AuthService.signOut();
+      if (!context.mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
     }
   }

@@ -1,5 +1,8 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'auth_gate.dart';
 import 'dashboard.dart';
+import 'firebase_options.dart';
 import 'forgot_password.dart';
 import 'login.dart';
 import 'loan_applications.dart';
@@ -9,8 +12,11 @@ import 'signup.dart';
 import 'verify_email.dart';
 
 /// Entry point of the application
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const RealEstateApp());
 }
 
@@ -35,8 +41,7 @@ class RealEstateApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
 
-      /// Set login page as initial screen
-      home: const LoginPage(),
+      home: const AuthGate(),
 
       /// Define named routes for easy navigation
       routes: {

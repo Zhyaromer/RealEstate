@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'auth_service.dart';
 import 'auth_widgets.dart';
-import 'models.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -57,17 +57,23 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      setState(() => _isLoading = true);
+      await AuthService.signUp(
+        username: username,
+        email: email,
+        phone: phone,
+        password: password,
+      );
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    AppStore.currentUser = UserProfile(
-      username: username,
-      email: email,
-      phone: phone,
-    );
-    Navigator.pushReplacementNamed(context, '/verify-email', arguments: email);
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/verify-email', arguments: email);
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage(AuthService.friendlyError(error), Colors.red);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showMessage(String message, Color color) {

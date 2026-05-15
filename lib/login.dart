@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'auth_service.dart';
 import 'auth_widgets.dart';
 
 /// Login page widget
@@ -51,12 +52,18 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      setState(() => _isLoading = true);
+      await AuthService.login(email: email, password: password);
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    Navigator.pushReplacementNamed(context, '/dashboard');
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage(AuthService.friendlyError(error), Colors.red);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showMessage(String message, Color color) {
@@ -137,8 +144,8 @@ class _LoginPageState extends State<LoginPage> {
         onPressed: _isLoading
             ? null
             : () {
-            setState(() => _obscurePassword = !_obscurePassword);
-          },
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
       ),
     );
   }
@@ -161,7 +168,9 @@ class _LoginPageState extends State<LoginPage> {
           style: TextStyle(color: Colors.grey.shade600),
         ),
         TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pushNamed(context, '/signup'),
+          onPressed: _isLoading
+              ? null
+              : () => Navigator.pushNamed(context, '/signup'),
           child: const Text(
             'Sign Up',
             style: TextStyle(fontWeight: FontWeight.bold),
