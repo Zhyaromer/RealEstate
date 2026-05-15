@@ -108,3 +108,87 @@ class Property {
     };
   }
 }
+
+class LoanApplication {
+  final String id;
+  final String name;
+  final String email;
+  final String phone;
+  final String employmentType;
+  final double monthlyIncome;
+  final double loanAmount;
+  final double interestRate;
+  final int tenureYears;
+  final double monthlyEmi;
+  final String status;
+  final DateTime submittedAt;
+
+  LoanApplication({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.employmentType,
+    required this.monthlyIncome,
+    required this.loanAmount,
+    required this.interestRate,
+    required this.tenureYears,
+    required this.monthlyEmi,
+    required this.status,
+    required this.submittedAt,
+  });
+}
+
+class AppStore {
+  static final List<Property> myProperties = [
+    Property(
+      id: 'mine-1',
+      title: 'Sunny Family House',
+      location: 'Erbil, Kurdistan',
+      price: 420000,
+      area: 2400,
+      bedrooms: 4,
+      bathrooms: 3,
+      image:
+          'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=900',
+      description: 'Bright family home with a private garden and parking.',
+      features: ['Garden', 'Parking', 'Balcony', 'Security'],
+      ownerName: 'Guest',
+      ownerPhone: '+964 750 000 0000',
+      propertyType: 'House',
+    ),
+    Property(
+      id: 'mine-2',
+      title: 'City View Apartment',
+      location: 'Sulaymaniyah, Kurdistan',
+      price: 185000,
+      area: 1250,
+      bedrooms: 2,
+      bathrooms: 2,
+      image:
+          'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
+      description: 'Modern apartment close to cafes, shops, and main roads.',
+      features: ['Lift', 'Parking', 'City View'],
+      ownerName: 'Guest',
+      ownerPhone: '+964 750 000 0000',
+      propertyType: 'Apartment',
+    ),
+  ];
+
+  static final List<LoanApplication> loanApplications = [
+    LoanApplication(
+      id: 'loan-1',
+      name: 'Guest User',
+      email: 'guest@email.com',
+      phone: '+964 750 000 0000',
+      employmentType: 'Salaried',
+      monthlyIncome: 2500,
+      loanAmount: 180000,
+      interestRate: 8.5,
+      tenureYears: 20,
+      monthlyEmi: 1562,
+      status: 'Under Review',
+      submittedAt: DateTime(2026, 5, 10),
+    ),
+  ];
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'models.dart';
 
 /// Sell Property Page
 /// Allows users to list their property for sale
@@ -58,6 +59,26 @@ class SellPropertyPageState extends State<SellPropertyPage> {
 
     try {
       await Future.delayed(const Duration(milliseconds: 500));
+      final price = double.tryParse(_priceController.text.trim()) ?? 0;
+      final area = double.tryParse(_areaController.text.trim()) ?? 0;
+      AppStore.myProperties.insert(
+        0,
+        Property(
+          id: 'mine-${DateTime.now().millisecondsSinceEpoch}',
+          title: _titleController.text.trim(),
+          location: _locationController.text.trim(),
+          price: price,
+          area: area,
+          bedrooms: _bedrooms,
+          bathrooms: _bathrooms,
+          image: _imageUrlController.text.trim(),
+          description: _descriptionController.text.trim(),
+          features: const ['Listed', 'Owner Managed', 'For Sale'],
+          ownerName: 'Guest',
+          ownerPhone: _ownerPhoneController.text.trim(),
+          propertyType: _propertyType,
+        ),
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

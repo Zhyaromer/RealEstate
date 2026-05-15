@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'forgot_password.dart';
 import 'login.dart';
+import 'loan_applications.dart';
+import 'my_properties.dart';
 import 'signup.dart';
 import 'verify_email.dart';
 
@@ -41,6 +43,8 @@ class RealEstateApp extends StatelessWidget {
         '/signup': (context) => const SignUpPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/verify-email': (context) => const VerifyEmailPage(),
+        '/my-properties': (context) => const MyPropertiesPage(),
+        '/loan-applications': (context) => const LoanApplicationsPage(),
         '/dashboard': (context) => const DashboardPage(),
       },
     );

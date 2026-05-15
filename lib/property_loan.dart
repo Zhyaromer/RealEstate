@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'models.dart';
 
 /// Property Loan Page
 /// Allows users to apply for property loans
@@ -67,6 +68,23 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
 
     try {
       await Future.delayed(const Duration(milliseconds: 500));
+      AppStore.loanApplications.insert(
+        0,
+        LoanApplication(
+          id: 'loan-${DateTime.now().millisecondsSinceEpoch}',
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+          employmentType: _employmentController.text.trim(),
+          monthlyIncome: double.tryParse(_salaryController.text.trim()) ?? 0,
+          loanAmount: _loanAmount,
+          interestRate: double.parse(_interestRate.toStringAsFixed(2)),
+          tenureYears: _loanTenure,
+          monthlyEmi: _emi,
+          status: 'Under Review',
+          submittedAt: DateTime.now(),
+        ),
+      );
       if (!mounted) return;
       showDialog(
         context: context,
