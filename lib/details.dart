@@ -25,124 +25,126 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppStyle.background,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(context),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 18),
-                  _buildPriceCard(),
-                  const SizedBox(height: 16),
-                  _buildSpecsGrid(),
-                  const SizedBox(height: 16),
-                  _buildInfoSummary(),
-                  const SizedBox(height: 22),
-                  _buildDescription(),
-                  const SizedBox(height: 22),
-                  _buildFeatures(),
-                  const SizedBox(height: 22),
-                  _buildOwnerInfo(),
-                  const SizedBox(height: 22),
-                  _buildActionButtons(context),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return SliverAppBar(
-      expandedHeight: 315,
-      pinned: true,
-      backgroundColor: AppStyle.primaryDark,
-      leading: IconButton(
-        onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.arrow_back_rounded),
-        style: IconButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: AppStyle.text,
-        ),
-      ),
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
+      body: SafeArea(
+        child: Column(
           children: [
-            PageView.builder(
-              itemCount: _images.length,
-              onPageChanged: (index) => setState(() => _imageIndex = index),
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () => _openGallery(context, index),
-                  child: Image.network(
-                    _images[index],
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.blue.shade50,
-                        child: const Icon(
-                          Icons.home_work_outlined,
-                          color: AppStyle.primary,
-                          size: 80,
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-            Positioned(
-              right: 16,
-              bottom: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
+            _buildImageHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 18),
+                    _buildPriceCard(),
+                    const SizedBox(height: 16),
+                    _buildSpecsGrid(),
+                    const SizedBox(height: 16),
+                    _buildInfoSummary(),
+                    const SizedBox(height: 22),
+                    _buildDescription(),
+                    const SizedBox(height: 22),
+                    _buildFeatures(),
+                    const SizedBox(height: 22),
+                    _buildOwnerInfo(),
+                    const SizedBox(height: 22),
+                    _buildActionButtons(context),
+                    const SizedBox(height: 24),
+                  ],
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.48),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${_imageIndex + 1}/${_images.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 20,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_images.length, (index) {
-                  final selected = _imageIndex == index;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: selected ? 18 : 7,
-                    height: 7,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: BoxDecoration(
-                      color: selected ? Colors.white : Colors.white54,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  );
-                }),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildImageHeader(BuildContext context) {
+    return SizedBox(
+      height: 315,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          PageView.builder(
+            physics: const PageScrollPhysics(),
+            itemCount: _images.length,
+            onPageChanged: (index) => setState(() => _imageIndex = index),
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _openGallery(context, index),
+                child: Image.network(
+                  _images[index],
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.blue.shade50,
+                      child: const Icon(
+                        Icons.home_work_outlined,
+                        color: AppStyle.primary,
+                        size: 80,
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          Positioned(
+            top: 14,
+            left: 14,
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppStyle.text,
+              ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.48),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${_imageIndex + 1}/${_images.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 20,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_images.length, (index) {
+                final selected = _imageIndex == index;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: selected ? 18 : 7,
+                  height: 7,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: selected ? Colors.white : Colors.white54,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -692,21 +694,17 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
               itemCount: widget.images.length,
               onPageChanged: (index) => setState(() => _index = index),
               itemBuilder: (context, index) {
-                return InteractiveViewer(
-                  minScale: 1,
-                  maxScale: 4,
-                  child: Center(
-                    child: Image.network(
-                      widget.images[index],
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.white,
-                          size: 72,
-                        );
-                      },
-                    ),
+                return Center(
+                  child: Image.network(
+                    widget.images[index],
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white,
+                        size: 72,
+                      );
+                    },
                   ),
                 );
               },

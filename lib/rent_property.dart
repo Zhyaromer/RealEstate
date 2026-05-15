@@ -207,7 +207,9 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
       backgroundColor: Colors.white.withOpacity(0.2),
       selectedColor: Colors.white,
       labelStyle: TextStyle(
-        color: isSelected ? AppStyle.primary : Colors.white,
+        color: isSelected
+            ? const Color.fromARGB(255, 21, 101, 192)
+            : const Color.fromARGB(255, 21, 101, 192).withOpacity(0.7),
         fontWeight: FontWeight.w600,
       ),
       side: BorderSide.none,

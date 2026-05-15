@@ -22,15 +22,15 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
   late final TextEditingController _locationController;
   late final TextEditingController _priceController;
   late final TextEditingController _areaController;
-  late final TextEditingController _imageController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _featuresController;
   late final TextEditingController _ownerNameController;
   late final TextEditingController _ownerPhoneController;
+  late final List<TextEditingController> _imageControllers;
 
   late int _bedrooms;
   late int _bathrooms;
   late String _propertyType;
+  late final Set<String> _selectedFeatures;
 
   final List<String> _propertyTypes = [
     'Apartment',
@@ -38,6 +38,17 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
     'House',
     'Penthouse',
     'Studio',
+  ];
+
+  final List<String> _featureOptions = [
+    'Parking',
+    'Garden',
+    'Pool',
+    'Balcony',
+    'Security',
+    'Gym',
+    'Lift',
+    'City View',
   ];
 
   @override
@@ -48,13 +59,16 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
     _locationController = TextEditingController(text: property.location);
     _priceController = TextEditingController(text: property.price.toStringAsFixed(0));
     _areaController = TextEditingController(text: property.area.toStringAsFixed(0));
-    _imageController = TextEditingController(text: property.image);
     _descriptionController = TextEditingController(text: property.description);
-    _featuresController = TextEditingController(text: property.features.join(', '));
     _ownerNameController = TextEditingController(text: property.ownerName);
     _ownerPhoneController = TextEditingController(text: property.ownerPhone);
+    final gallery = property.galleryImages.take(5).toList();
+    _imageControllers = List.generate(5, (index) {
+      return TextEditingController(text: index < gallery.length ? gallery[index] : '');
+    });
     _bedrooms = property.bedrooms;
     _bathrooms = property.bathrooms;
+    _selectedFeatures = property.features.toSet();
     _propertyType = _propertyTypes.contains(property.propertyType)
         ? property.propertyType
         : _propertyTypes.first;
@@ -66,11 +80,12 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
     _locationController.dispose();
     _priceController.dispose();
     _areaController.dispose();
-    _imageController.dispose();
     _descriptionController.dispose();
-    _featuresController.dispose();
     _ownerNameController.dispose();
     _ownerPhoneController.dispose();
+    for (final controller in _imageControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -111,12 +126,7 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
                         keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 14),
-                      _buildField(
-                        _imageController,
-                        'Image URL',
-                        Icons.image_outlined,
-                        keyboardType: TextInputType.url,
-                      ),
+                      _buildImageUrlFields(),
                       const SizedBox(height: 14),
                       Row(
                         children: [
@@ -124,7 +134,7 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
                             child: _buildField(
                               _priceController,
                               'Price',
-                              Icons.payments_outlined,
+                              Icons.attach_money_rounded,
                               keyboardType: TextInputType.number,
                             ),
                           ),
@@ -142,12 +152,7 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
                       const SizedBox(height: 18),
                       _buildCounters(),
                       const SizedBox(height: 14),
-                      _buildField(
-                        _featuresController,
-                        'Features',
-                        Icons.check_circle_outline,
-                        hint: 'Garden, Parking, Security',
-                      ),
+                      _buildFeatureCheckboxes(),
                       const SizedBox(height: 14),
                       _buildField(
                         _descriptionController,
@@ -223,10 +228,11 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
   }
 
   Widget _buildPreview() {
+    final previewUrl = _imageControllers.first.text.trim();
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
       child: Image.network(
-        _imageController.text,
+        previewUrl,
         height: 150,
         width: double.infinity,
         fit: BoxFit.cover,
@@ -265,6 +271,7 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
     String? hint,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
+    bool requiredField = true,
   }) {
     return TextFormField(
       controller: controller,
@@ -272,12 +279,81 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
       keyboardType: keyboardType,
       decoration: _inputDecoration(label, icon, hint: hint),
       validator: (value) {
-        if (value == null || value.trim().isEmpty) {
+        if (requiredField && (value == null || value.trim().isEmpty)) {
           return 'Please enter $label';
         }
         return null;
       },
-      onChanged: label == 'Image URL' ? (_) => setState(() {}) : null,
+      onChanged: label.startsWith('Image URL') ? (_) => setState(() {}) : null,
+    );
+  }
+
+  Widget _buildImageUrlFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Images',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        ...List.generate(_imageControllers.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == _imageControllers.length - 1 ? 0 : 12,
+            ),
+            child: _buildField(
+              _imageControllers[index],
+              index == 0 ? 'Image URL 1' : 'Image URL ${index + 1}',
+              Icons.image_outlined,
+              keyboardType: TextInputType.url,
+              requiredField: index == 0,
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildFeatureCheckboxes() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Features',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _featureOptions.map((feature) {
+            final selected = _selectedFeatures.contains(feature);
+            return FilterChip(
+              label: Text(feature),
+              selected: selected,
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    _selectedFeatures.add(feature);
+                  } else {
+                    _selectedFeatures.remove(feature);
+                  }
+                });
+              },
+              selectedColor: Colors.blue.shade50,
+              checkmarkColor: AppStyle.primary,
+              side: BorderSide(
+                color: selected ? AppStyle.primary : Colors.grey.shade300,
+              ),
+              labelStyle: TextStyle(
+                color: selected ? AppStyle.primary : Colors.grey.shade700,
+                fontWeight: FontWeight.w700,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -374,10 +450,10 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
 
-    final features = _featuresController.text
-        .split(',')
-        .map((feature) => feature.trim())
-        .where((feature) => feature.isNotEmpty)
+    final images = _imageControllers
+        .map((controller) => controller.text.trim())
+        .where((url) => url.isNotEmpty)
+        .take(5)
         .toList();
 
     AppStore.myProperties[widget.propertyIndex] = Property(
@@ -388,13 +464,10 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
       area: double.tryParse(_areaController.text.trim()) ?? widget.property.area,
       bedrooms: _bedrooms,
       bathrooms: _bathrooms,
-      image: _imageController.text.trim(),
-      images: [
-        _imageController.text.trim(),
-        ...widget.property.images,
-      ].where((url) => url.isNotEmpty).toList(),
+      image: images.first,
+      images: images,
       description: _descriptionController.text.trim(),
-      features: features,
+      features: _selectedFeatures.toList(),
       ownerName: _ownerNameController.text.trim(),
       ownerPhone: _ownerPhoneController.text.trim(),
       propertyType: _propertyType,
