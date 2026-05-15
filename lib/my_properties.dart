@@ -296,7 +296,7 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: () => _deleteProperty(index),
+                        onPressed: () => _confirmDelete(index),
                         icon: const Icon(Icons.delete_outline, size: 18),
                         label: const Text('Delete'),
                         style: FilledButton.styleFrom(
@@ -395,6 +395,33 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(int index) async {
+    final property = AppStore.myProperties[index];
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text('Delete listing?'),
+        content: Text('Are you sure you want to delete "${property.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppStyle.danger),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true && mounted) {
+      _deleteProperty(index);
+    }
   }
 
   void _deleteProperty(int index) {

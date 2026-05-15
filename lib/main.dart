@@ -4,6 +4,7 @@ import 'forgot_password.dart';
 import 'login.dart';
 import 'loan_applications.dart';
 import 'my_properties.dart';
+import 'saved_houses.dart';
 import 'signup.dart';
 import 'verify_email.dart';
 
@@ -44,6 +45,7 @@ class RealEstateApp extends StatelessWidget {
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/verify-email': (context) => const VerifyEmailPage(),
         '/my-properties': (context) => const MyPropertiesPage(),
+        '/saved-houses': (context) => const SavedHousesPage(),
         '/loan-applications': (context) => const LoanApplicationsPage(),
         '/dashboard': (context) => const DashboardPage(),
       },

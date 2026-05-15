@@ -6,6 +6,7 @@ import 'my_properties.dart';
 import 'properties.dart';
 import 'property_loan.dart';
 import 'rent_property.dart';
+import 'saved_houses.dart';
 import 'sell_property.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -84,6 +85,16 @@ class _DashboardPageState extends State<DashboardPage> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate(
                   [
+                    _buildWorkspaceCard(
+                      context,
+                      icon: Icons.favorite_border_rounded,
+                      title: 'Saved Houses',
+                      subtitle: 'Review homes you saved while browsing',
+                      count: '${AppStore.savedProperties.length} saved',
+                      color: AppStyle.primary,
+                      page: const SavedHousesPage(),
+                    ),
+                    const SizedBox(height: 14),
                     _buildWorkspaceCard(
                       context,
                       icon: Icons.home_work_outlined,
@@ -188,7 +199,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Expanded(
                   child: _buildHeroMetric(
                     'Saved',
-                    '8',
+                    '${AppStore.savedProperties.length}',
                     Icons.favorite_border_rounded,
                   ),
                 ),
@@ -374,7 +385,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildLogoutButton(BuildContext context) {
     return OutlinedButton.icon(
-      onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+      onPressed: () => _confirmLogout(context),
       icon: const Icon(Icons.logout_rounded),
       label: const Text('Logout'),
       style: OutlinedButton.styleFrom(
@@ -392,5 +403,31 @@ class _DashboardPageState extends State<DashboardPage> {
       MaterialPageRoute(builder: (context) => page),
     );
     if (mounted) setState(() {});
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text('Logout?'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppStyle.danger),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true && context.mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 }

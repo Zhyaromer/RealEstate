@@ -140,6 +140,67 @@ class LoanApplication {
 }
 
 class AppStore {
+  static final List<Property> availableProperties = [
+    Property(
+      id: 'p1',
+      title: 'Modern Luxury Villa',
+      location: 'Mumbai, Maharashtra',
+      price: 5000000,
+      area: 3500,
+      bedrooms: 4,
+      bathrooms: 3,
+      image:
+          'https://cf.bstatic.com/xdata/images/hotel/max1024x768/466378675.jpg?k=47439be8a91e422a1dbef4f02630d6c86f1266a815d7bd8f21b2c5ce0492bcc1&o=',
+      description:
+          'Stunning modern villa with panoramic views and premium finishes.',
+      features: ['Pool', 'Garden', 'Gym', 'Security', 'Parking'],
+      ownerName: 'Rajesh Kumar',
+      ownerPhone: '+91 9876543210',
+      propertyType: 'Villa',
+    ),
+    Property(
+      id: 'p2',
+      title: 'Modern Apartment',
+      location: 'Bangalore, Karnataka',
+      price: 3500000,
+      area: 2200,
+      bedrooms: 3,
+      bathrooms: 2,
+      image:
+          'https://www.thehousedesigners.com/images/plans/01/UDC/bulk/7295/e276-gao_residence_view1_m.webp',
+      description:
+          'Beautiful apartment in gated community with excellent amenities.',
+      features: ['Balcony', 'Lift', 'Parking', 'Club', 'Play Area'],
+      ownerName: 'Priya Sharma',
+      ownerPhone: '+91 9876543211',
+      propertyType: 'Apartment',
+    ),
+    Property(
+      id: 'p3',
+      title: 'Beachfront Property',
+      location: 'Goa, India',
+      price: 7500000,
+      area: 4000,
+      bedrooms: 5,
+      bathrooms: 4,
+      image:
+          'https://modernhb.com/wp-content/uploads/sites/6/2025/07/beachhousesJL25.jpeg',
+      description: 'Exclusive beachfront property with private beach access.',
+      features: ['Beach', 'Terrace', 'Theater', 'Wine Cellar', 'Hot Tub'],
+      ownerName: 'Vikram Patel',
+      ownerPhone: '+91 9876543212',
+      propertyType: 'Villa',
+    ),
+  ];
+
+  static final Set<String> savedPropertyIds = {'p1', 'p2'};
+
+  static List<Property> get savedProperties {
+    return availableProperties
+        .where((property) => savedPropertyIds.contains(property.id))
+        .toList();
+  }
+
   static final List<Property> myProperties = [
     Property(
       id: 'mine-1',
