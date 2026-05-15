@@ -98,22 +98,19 @@ class SellPropertyPageState extends State<SellPropertyPage> {
           images: images,
           description: _descriptionController.text.trim(),
           features: _selectedFeatures.toList(),
-          ownerName: 'Guest',
+          ownerName: AppStore.currentUser.username,
           ownerPhone: _ownerPhoneController.text.trim(),
           propertyType: _propertyType,
         ),
       );
       if (!mounted) return;
+      _clearForm();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Property listed successfully!'),
-          backgroundColor: Colors.green,
+          content: Text('Complete! Property listed successfully.'),
+          backgroundColor: AppStyle.success,
         ),
       );
-
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) Navigator.pop(context);
-      });
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -123,6 +120,27 @@ class SellPropertyPageState extends State<SellPropertyPage> {
         ),
       );
     }
+  }
+
+  void _clearForm() {
+    _formKey.currentState?.reset();
+    _titleController.clear();
+    _locationController.clear();
+    _priceController.clear();
+    _areaController.clear();
+    _descriptionController.clear();
+    _ownerPhoneController.clear();
+    for (final controller in _imageControllers) {
+      controller.clear();
+    }
+    setState(() {
+      _bedrooms = 2;
+      _bathrooms = 1;
+      _propertyType = 'Apartment';
+      _selectedFeatures
+        ..clear()
+        ..add('Parking');
+    });
   }
 
   @override
@@ -198,7 +216,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
                             controller: _priceController,
                             label: 'Price (\$)',
                             hint: 'e.g., 5000000',
-                            icon: Icons.currency_rupee,
+                            icon: Icons.attach_money_rounded,
                             keyboardType: TextInputType.number,
                           ),
                           const SizedBox(height: 16),
@@ -343,7 +361,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
         fillColor: Colors.grey.shade50,
       ),
       validator: (value) {
-        if (requiredField && (value == null || value.isEmpty)) {
+        if (requiredField && (value == null || value.trim().isEmpty)) {
           return 'Please enter $label';
         }
         return null;

@@ -25,7 +25,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
   final _salaryController = TextEditingController();
 
   /// Loan calculator values
-  double _loanAmount = 5000000; // 50 Lakhs
+  double _loanAmount = 5000000;
   double _interestRate = 8.5; // 8.5% per annum
   int _loanTenure = 20; // 20 years
 
@@ -228,7 +228,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
             max: 50000000,
             divisions: 49,
             onChanged: (value) => setState(() => _loanAmount = value),
-            displayValue: '\$${(_loanAmount / 100000).toStringAsFixed(0)} L',
+            displayValue: '\$${(_loanAmount / 1000000).toStringAsFixed(1)}M',
           ),
           const SizedBox(height: 20),
 
@@ -295,11 +295,11 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
                   children: [
                     _buildEmiDetail(
                       'Total Amount',
-                      '\$${(_totalAmount / 100000).toStringAsFixed(1)}L',
+                      '\$${(_totalAmount / 1000000).toStringAsFixed(1)}M',
                     ),
                     _buildEmiDetail(
                       'Total Interest',
-                      '\$${(_totalInterest / 100000).toStringAsFixed(1)}L',
+                      '\$${(_totalInterest / 1000000).toStringAsFixed(1)}M',
                     ),
                   ],
                 ),
@@ -439,7 +439,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
               controller: _salaryController,
               label: 'Monthly Income (\$)',
               hint: 'Enter your monthly income',
-              icon: Icons.currency_rupee,
+              icon: Icons.attach_money_rounded,
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 24),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
+import 'details.dart';
 import 'edit_property.dart';
 import 'models.dart';
 import 'sell_property.dart';
@@ -177,34 +178,45 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
+          InkWell(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-            child: Stack(
-              children: [
-                Image.network(
-                  property.image,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 150,
-                      width: double.infinity,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PropertyDetailsPage(property: property),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              child: Stack(
+                children: [
+                  Image.network(
+                    property.image,
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 150,
+                        width: double.infinity,
                         color: Colors.blue.shade50,
-                      child: Icon(
-                        Icons.home_work_outlined,
-                        color: AppStyle.primary.withOpacity(0.45),
-                        size: 48,
-                      ),
-                    );
-                  },
-                ),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: _buildStatusBadge('For Sale'),
-                ),
-              ],
+                        child: Icon(
+                          Icons.home_work_outlined,
+                          color: AppStyle.primary.withOpacity(0.45),
+                          size: 48,
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: _buildStatusBadge('For Sale'),
+                  ),
+                ],
+              ),
             ),
           ),
           Padding(
@@ -212,59 +224,78 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        property.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PropertyDetailsPage(property: property),
                       ),
-                    ),
-                    Text(
-                      property.formattedPrice,
-                      style: TextStyle(
-                        color: AppStyle.primary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              property.title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            property.formattedPrice,
+                            style: const TextStyle(
+                              color: AppStyle.primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 18,
-                      color: Colors.grey.shade500,
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        property.location,
-                        style: TextStyle(color: Colors.grey.shade600),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 18,
+                            color: Colors.grey.shade500,
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              property.location,
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    _buildInfoChip(Icons.bed_outlined, '${property.bedrooms}'),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      Icons.bathtub_outlined,
-                      '${property.bathrooms}',
-                    ),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      Icons.square_foot_outlined,
-                      property.formattedArea,
-                    ),
-                  ],
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          _buildInfoChip(
+                            Icons.bed_outlined,
+                            '${property.bedrooms}',
+                          ),
+                          const SizedBox(width: 8),
+                          _buildInfoChip(
+                            Icons.bathtub_outlined,
+                            '${property.bathrooms}',
+                          ),
+                          const SizedBox(width: 8),
+                          _buildInfoChip(
+                            Icons.square_foot_outlined,
+                            property.formattedArea,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(

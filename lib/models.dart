@@ -10,7 +10,7 @@ class Property {
   /// Location (city, state)
   final String location;
 
-  /// Price in rupees
+  /// Price in dollars
   final double price;
 
   /// Area in square feet
@@ -74,13 +74,12 @@ class Property {
   }
 
   List<String> get galleryImages {
-    final allImages = <String>[
-      if (image.trim().isNotEmpty) image.trim(),
-      ...images
-          .where((item) => item.trim().isNotEmpty)
-          .map((item) => item.trim()),
-    ];
-    return allImages.toSet().toList();
+    final savedImages = images
+        .where((item) => item.trim().isNotEmpty)
+        .map((item) => item.trim())
+        .toList();
+    if (savedImages.isNotEmpty) return savedImages;
+    return image.trim().isEmpty ? <String>[] : [image.trim()];
   }
 
   /// Convert Firestore data into a Property object
@@ -154,7 +153,25 @@ class LoanApplication {
   });
 }
 
+class UserProfile {
+  final String username;
+  final String email;
+  final String phone;
+
+  UserProfile({
+    required this.username,
+    required this.email,
+    required this.phone,
+  });
+}
+
 class AppStore {
+  static UserProfile currentUser = UserProfile(
+    username: 'Guest',
+    email: 'guest@email.com',
+    phone: '+964 750 000 0000',
+  );
+
   static final List<Property> availableProperties = [
     Property(
       id: 'p1',

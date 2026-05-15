@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'auth_widgets.dart';
+import 'models.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -61,6 +62,11 @@ class _SignUpPageState extends State<SignUpPage> {
 
     if (!mounted) return;
     setState(() => _isLoading = false);
+    AppStore.currentUser = UserProfile(
+      username: username,
+      email: email,
+      phone: phone,
+    );
     Navigator.pushReplacementNamed(context, '/verify-email', arguments: email);
   }
 

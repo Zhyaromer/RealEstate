@@ -545,7 +545,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
               decoration: InputDecoration(
                 labelText: 'Your Bid Amount',
                 hintText: 'Enter amount in \$',
-                prefixIcon: const Icon(Icons.payments_outlined),
+                prefixIcon: const Icon(Icons.attach_money_rounded),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

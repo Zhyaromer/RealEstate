@@ -114,8 +114,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       color: AppStyle.primary,
                       page: const LoanApplicationsPage(),
                     ),
-                    const SizedBox(height: 22),
-                    _buildLogoutButton(context),
                   ],
                 ),
               ),
@@ -148,18 +146,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: const Icon(Icons.home_rounded, color: AppStyle.primary),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Welcome Back',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
-                    SizedBox(height: 3),
+                    const SizedBox(height: 3),
                     Text(
-                      'Guest',
-                      style: TextStyle(
+                      AppStore.currentUser.username,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -168,6 +166,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
               ),
+              _buildProfileMenu(context),
             ],
           ),
           const SizedBox(height: 22),
@@ -383,16 +382,46 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: () => _confirmLogout(context),
-      icon: const Icon(Icons.logout_rounded),
-      label: const Text('Logout'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppStyle.danger,
-        side: BorderSide(color: AppStyle.danger.withOpacity(0.18)),
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  Widget _buildProfileMenu(BuildContext context) {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == 'info') {
+          _showUserInfo(context);
+        } else if (value == 'logout') {
+          _confirmLogout(context);
+        }
+      },
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      itemBuilder: (context) => const [
+        PopupMenuItem(
+          value: 'info',
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded),
+              SizedBox(width: 10),
+              Text('Info'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'logout',
+          child: Row(
+            children: [
+              Icon(Icons.logout_rounded, color: AppStyle.danger),
+              SizedBox(width: 10),
+              Text('Logout'),
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.16),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.person_outline_rounded, color: Colors.white),
       ),
     );
   }
@@ -429,5 +458,51 @@ class _DashboardPageState extends State<DashboardPage> {
     if (shouldLogout == true && context.mounted) {
       Navigator.pushReplacementNamed(context, '/login');
     }
+  }
+
+  Future<void> _showUserInfo(BuildContext context) async {
+    final user = AppStore.currentUser;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text('Profile Info'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildInfoLine(Icons.person_outline_rounded, 'Username', user.username),
+            const SizedBox(height: 12),
+            _buildInfoLine(Icons.email_outlined, 'Email', user.email),
+            const SizedBox(height: 12),
+            _buildInfoLine(Icons.phone_outlined, 'Phone', user.phone),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoLine(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: AppStyle.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(color: Colors.grey.shade600)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
