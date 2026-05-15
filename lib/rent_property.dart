@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_style.dart';
 
 /// Rental Property Model
 /// Represents a property available for rent
@@ -97,14 +98,9 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppStyle.background,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.purple.shade700, Colors.indigo.shade700],
-          ),
-        ),
+        color: AppStyle.primaryDark,
         child: SafeArea(
           child: Column(
             children: [
@@ -119,7 +115,7 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
                 child: Container(
                   margin: const EdgeInsets.only(top: 20),
                   decoration: const BoxDecoration(
-                    color: Color.fromARGB(255, 255, 255, 255),
+                    color: AppStyle.background,
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(30),
                     ),
@@ -211,7 +207,7 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
       backgroundColor: Colors.white.withOpacity(0.2),
       selectedColor: Colors.white,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.purple.shade700 : Colors.purple,
+        color: isSelected ? AppStyle.primary : Colors.white,
         fontWeight: FontWeight.w600,
       ),
       side: BorderSide.none,
@@ -302,7 +298,7 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.purple.shade700,
+                      color: AppStyle.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -362,7 +358,7 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.purple.shade700,
+                              color: AppStyle.primary,
                             ),
                           ),
                           Text(
@@ -402,18 +398,18 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.purple.shade50,
+        color: Colors.blue.shade50,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.purple.shade700),
+          Icon(icon, size: 16, color: AppStyle.primary),
           const SizedBox(width: 4),
           Text(
             value,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: Colors.purple.shade700,
+              color: AppStyle.primary,
             ),
           ),
         ],
@@ -479,9 +475,9 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.purple.shade50,
+                        color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.purple.shade200),
+                        border: Border.all(color: Colors.blue.shade100),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +495,7 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.purple.shade700,
+                              color: AppStyle.primary,
                             ),
                           ),
                         ],
@@ -531,7 +527,7 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
                         icon: const Icon(Icons.phone),
                         label: const Text('Contact Owner'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple.shade700,
+                          backgroundColor: AppStyle.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(

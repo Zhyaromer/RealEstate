@@ -1,56 +1,55 @@
 import 'package:flutter/material.dart';
+import 'app_style.dart';
 import 'models.dart';
 
-/// Property details page - Shows full information about a property
-/// Includes image, specs, description, features, owner info, and action buttons
-class PropertyDetailsPage extends StatelessWidget {
-  /// The property to display
+class PropertyDetailsPage extends StatefulWidget {
+  const PropertyDetailsPage({super.key, required this.property});
+
   final Property property;
 
-  const PropertyDetailsPage({super.key, required this.property});
+  @override
+  State<PropertyDetailsPage> createState() => _PropertyDetailsPageState();
+}
+
+class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
+  int _imageIndex = 0;
+
+  Property get property => widget.property;
+
+  List<String> get _images {
+    final images = property.galleryImages;
+    return images.isEmpty ? [property.image] : images;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppStyle.background,
       body: CustomScrollView(
         slivers: [
-          /// App bar with property image
           _buildAppBar(context),
-
-          /// Property details content
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Title and location
                   _buildHeader(),
-                  const SizedBox(height: 20),
-
-                  /// Price card
+                  const SizedBox(height: 18),
                   _buildPriceCard(),
-                  const SizedBox(height: 20),
-
-                  /// Specs grid (area, beds, baths, rating)
+                  const SizedBox(height: 16),
                   _buildSpecsGrid(),
-                  const SizedBox(height: 24),
-
-                  /// Description section
+                  const SizedBox(height: 16),
+                  _buildInfoSummary(),
+                  const SizedBox(height: 22),
                   _buildDescription(),
-                  const SizedBox(height: 24),
-
-                  /// Features section
+                  const SizedBox(height: 22),
                   _buildFeatures(),
-                  const SizedBox(height: 24),
-
-                  /// Owner information
+                  const SizedBox(height: 22),
                   _buildOwnerInfo(),
-                  const SizedBox(height: 24),
-
-                  /// Action buttons (Bid and Buy)
+                  const SizedBox(height: 22),
                   _buildActionButtons(context),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -60,51 +59,120 @@ class PropertyDetailsPage extends StatelessWidget {
     );
   }
 
-  /// Builds app bar with property image and back button
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 300,
+      expandedHeight: 315,
       pinned: true,
+      backgroundColor: AppStyle.primaryDark,
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.arrow_back),
+        icon: const Icon(Icons.arrow_back_rounded),
         style: IconButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          foregroundColor: AppStyle.text,
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
-        background: Image.network(
-          property.image,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey.shade300,
-              child: const Icon(Icons.image, size: 80),
-            );
-          },
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              itemCount: _images.length,
+              onPageChanged: (index) => setState(() => _imageIndex = index),
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () => _openGallery(context, index),
+                  child: Image.network(
+                    _images[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.blue.shade50,
+                        child: const Icon(
+                          Icons.home_work_outlined,
+                          color: AppStyle.primary,
+                          size: 80,
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.48),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_imageIndex + 1}/${_images.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 20,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_images.length, (index) {
+                  final selected = _imageIndex == index;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: selected ? 18 : 7,
+                    height: 7,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: selected ? Colors.white : Colors.white54,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// Builds property title and location
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           property.title,
-          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w900,
+            color: AppStyle.text,
+          ),
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Icon(Icons.location_on, color: Colors.red.shade400, size: 20),
+            Icon(
+              Icons.location_on_outlined,
+              color: Colors.grey.shade500,
+              size: 20,
+            ),
             const SizedBox(width: 6),
-            Text(
-              property.location,
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            Expanded(
+              child: Text(
+                property.location,
+                style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+              ),
             ),
           ],
         ),
@@ -112,29 +180,48 @@ class PropertyDetailsPage extends StatelessWidget {
     );
   }
 
-  /// Builds price display card
   Widget _buildPriceCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade200),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.blue.shade100),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Asking Price',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Asking Price',
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  property.formattedPrice,
+                  style: const TextStyle(
+                    fontSize: 31,
+                    fontWeight: FontWeight.w900,
+                    color: AppStyle.primary,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            property.formattedPrice,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue.shade700,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Text(
+              property.propertyType,
+              style: const TextStyle(
+                color: AppStyle.primary,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],
@@ -142,51 +229,60 @@ class PropertyDetailsPage extends StatelessWidget {
     );
   }
 
-  /// Builds grid showing property specifications
   Widget _buildSpecsGrid() {
     return Row(
       children: [
         Expanded(
           child: _buildSpecItem(
-            Icons.photo_size_select_small,
+            Icons.square_foot_outlined,
             property.formattedArea,
             'Area',
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSpecItem(Icons.bed, '${property.bedrooms}', 'Beds'),
-        ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: _buildSpecItem(
-            Icons.bathroom,
+            Icons.bed_outlined,
+            '${property.bedrooms}',
+            'Beds',
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildSpecItem(
+            Icons.bathtub_outlined,
             '${property.bathrooms}',
             'Baths',
           ),
         ),
-        const SizedBox(width: 12),
       ],
     );
   }
 
-  /// Builds a single specification item
   Widget _buildSpecItem(IconData icon, String value, String label) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.blue.shade700, size: 24),
+          Icon(icon, color: AppStyle.primary, size: 24),
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             label,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
@@ -196,163 +292,222 @@ class PropertyDetailsPage extends StatelessWidget {
     );
   }
 
-  /// Builds description section
-  Widget _buildDescription() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'About Property',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          property.description,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey.shade700,
-            height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Builds features section with chips
-  Widget _buildFeatures() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Features & Amenities',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: property.features.map((feature) {
-            return Chip(
-              label: Text(feature),
-              backgroundColor: Colors.green.shade100,
-              labelStyle: TextStyle(
-                color: Colors.green.shade700,
-                fontWeight: FontWeight.w600,
-              ),
-              side: BorderSide(color: Colors.green.shade300),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  /// Builds owner information card
-  Widget _buildOwnerInfo() {
+  Widget _buildInfoSummary() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Owner Information',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          _buildInfoRow(
+            Icons.collections_outlined,
+            'Images',
+            '${_images.length} photos',
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              /// Owner avatar
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade400, Colors.purple.shade400],
-                  ),
-                ),
-                child: const Icon(Icons.person, color: Colors.white, size: 30),
-              ),
-              const SizedBox(width: 16),
-
-              /// Owner details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      property.ownerName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      property.ownerPhone,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              /// Call button
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.phone),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.blue.shade100,
-                  foregroundColor: Colors.blue.shade700,
-                ),
-              ),
-            ],
+          const Divider(height: 22),
+          _buildInfoRow(
+            Icons.apartment_outlined,
+            'Type',
+            property.propertyType,
+          ),
+          const Divider(height: 22),
+          _buildInfoRow(
+            Icons.phone_outlined,
+            'Owner Phone',
+            property.ownerPhone,
           ),
         ],
       ),
     );
   }
 
-  /// Builds action buttons row (Make Bid and Buy Now)
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: AppStyle.primary, size: 21),
+        ),
+        const SizedBox(width: 12),
+        Text(label, style: TextStyle(color: Colors.grey.shade600)),
+        const Spacer(),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppStyle.text,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDescription() {
+    return _buildSection(
+      title: 'About Property',
+      child: Text(
+        property.description,
+        style: TextStyle(
+          fontSize: 15,
+          color: Colors.grey.shade700,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatures() {
+    return _buildSection(
+      title: 'Features & Amenities',
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: property.features.map((feature) {
+          return Chip(
+            avatar: const Icon(
+              Icons.check_rounded,
+              size: 17,
+              color: AppStyle.primary,
+            ),
+            label: Text(feature),
+            backgroundColor: Colors.blue.shade50,
+            labelStyle: const TextStyle(
+              color: AppStyle.primary,
+              fontWeight: FontWeight.w700,
+            ),
+            side: BorderSide(color: Colors.blue.shade100),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSection({required String title, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            color: AppStyle.text,
+          ),
+        ),
+        const SizedBox(height: 12),
+        child,
+      ],
+    );
+  }
+
+  Widget _buildOwnerInfo() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppStyle.primaryDark, AppStyle.primary],
+              ),
+            ),
+            child: const Icon(Icons.person, color: Colors.white, size: 30),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  property.ownerName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: AppStyle.text,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  property.ownerPhone,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.phone_outlined),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.blue.shade50,
+              foregroundColor: AppStyle.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       children: [
-        /// Make a Bid button
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () => _showBidDialog(context),
-            icon: const Icon(Icons.gavel),
+            icon: const Icon(Icons.gavel_outlined),
             label: const Text('Make a Bid'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.blue.shade700,
-              side: BorderSide(color: Colors.blue.shade700, width: 2),
+              foregroundColor: AppStyle.primary,
+              side: const BorderSide(color: AppStyle.primary, width: 2),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
         ),
         const SizedBox(width: 12),
-
-        /// Buy Now button
         Expanded(
-          child: ElevatedButton.icon(
+          child: FilledButton.icon(
             onPressed: () => _showBuyDialog(context),
-            icon: const Icon(Icons.shopping_bag),
+            icon: const Icon(Icons.shopping_bag_outlined),
             label: const Text('Buy Now'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade700,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppStyle.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
@@ -361,7 +516,16 @@ class PropertyDetailsPage extends StatelessWidget {
     );
   }
 
-  /// Shows dialog to place a bid
+  void _openGallery(BuildContext context, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            _FullscreenGallery(images: _images, initialIndex: initialIndex),
+      ),
+    );
+  }
+
   void _showBidDialog(BuildContext context) {
     final bidController = TextEditingController();
 
@@ -381,7 +545,7 @@ class PropertyDetailsPage extends StatelessWidget {
               decoration: InputDecoration(
                 labelText: 'Your Bid Amount',
                 hintText: 'Enter amount in \$',
-                prefixIcon: const Icon(Icons.currency_rupee),
+                prefixIcon: const Icon(Icons.payments_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -394,14 +558,14 @@ class PropertyDetailsPage extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               if (bidController.text.isNotEmpty) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Bid of \$${bidController.text} placed!'),
-                    backgroundColor: Colors.green,
+                    backgroundColor: AppStyle.success,
                   ),
                 );
               }
@@ -413,7 +577,6 @@ class PropertyDetailsPage extends StatelessWidget {
     );
   }
 
-  /// Shows dialog to confirm purchase
   void _showBuyDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -429,8 +592,6 @@ class PropertyDetailsPage extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 16),
-
-            /// Price breakdown
             _buildPriceRow('Property Price:', property.formattedPrice),
             const SizedBox(height: 8),
             _buildPriceRow(
@@ -450,30 +611,24 @@ class PropertyDetailsPage extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('${property.title} purchased successfully!'),
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppStyle.success,
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-            ),
-            child: const Text(
-              'Complete Purchase',
-              style: TextStyle(color: Colors.white),
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppStyle.success),
+            child: const Text('Complete Purchase'),
           ),
         ],
       ),
     );
   }
 
-  /// Helper widget for price breakdown rows
   Widget _buildPriceRow(String label, String value, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -490,10 +645,111 @@ class PropertyDetailsPage extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: isTotal ? 16 : 14,
-            color: isTotal ? Colors.green.shade700 : null,
+            color: isTotal ? AppStyle.success : null,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FullscreenGallery extends StatefulWidget {
+  const _FullscreenGallery({required this.images, required this.initialIndex});
+
+  final List<String> images;
+  final int initialIndex;
+
+  @override
+  State<_FullscreenGallery> createState() => _FullscreenGalleryState();
+}
+
+class _FullscreenGalleryState extends State<_FullscreenGallery> {
+  late final PageController _controller;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex;
+    _controller = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _controller,
+              itemCount: widget.images.length,
+              onPageChanged: (index) => setState(() => _index = index),
+              itemBuilder: (context, index) {
+                return InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 4,
+                  child: Center(
+                    child: Image.network(
+                      widget.images[index],
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white,
+                          size: 72,
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              top: 12,
+              left: 12,
+              child: IconButton.filled(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 24,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.16),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_index + 1}/${widget.images.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

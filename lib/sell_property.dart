@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_style.dart';
 import 'models.dart';
 
 /// Sell Property Page
@@ -21,13 +22,17 @@ class SellPropertyPageState extends State<SellPropertyPage> {
   final _priceController = TextEditingController();
   final _areaController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _imageUrlController = TextEditingController();
   final _ownerPhoneController = TextEditingController();
+  final List<TextEditingController> _imageControllers = List.generate(
+    5,
+    (_) => TextEditingController(),
+  );
 
   /// Selected values
   int _bedrooms = 2;
   int _bathrooms = 1;
   String _propertyType = 'Apartment';
+  final Set<String> _selectedFeatures = {'Parking'};
 
   /// List of property types
   final List<String> _propertyTypes = [
@@ -38,6 +43,17 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     'Studio',
   ];
 
+  final List<String> _featureOptions = [
+    'Parking',
+    'Garden',
+    'Pool',
+    'Balcony',
+    'Security',
+    'Gym',
+    'Lift',
+    'City View',
+  ];
+
   @override
   void dispose() {
     /// srrenaway datay naw controllerakan
@@ -46,8 +62,10 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     _priceController.dispose();
     _areaController.dispose();
     _descriptionController.dispose();
-    _imageUrlController.dispose();
     _ownerPhoneController.dispose();
+    for (final controller in _imageControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -61,6 +79,11 @@ class SellPropertyPageState extends State<SellPropertyPage> {
       await Future.delayed(const Duration(milliseconds: 500));
       final price = double.tryParse(_priceController.text.trim()) ?? 0;
       final area = double.tryParse(_areaController.text.trim()) ?? 0;
+      final images = _imageControllers
+          .map((controller) => controller.text.trim())
+          .where((url) => url.isNotEmpty)
+          .take(5)
+          .toList();
       AppStore.myProperties.insert(
         0,
         Property(
@@ -71,9 +94,10 @@ class SellPropertyPageState extends State<SellPropertyPage> {
           area: area,
           bedrooms: _bedrooms,
           bathrooms: _bathrooms,
-          image: _imageUrlController.text.trim(),
+          image: images.first,
+          images: images,
           description: _descriptionController.text.trim(),
-          features: const ['Listed', 'Owner Managed', 'For Sale'],
+          features: _selectedFeatures.toList(),
           ownerName: 'Guest',
           ownerPhone: _ownerPhoneController.text.trim(),
           propertyType: _propertyType,
@@ -104,14 +128,9 @@ class SellPropertyPageState extends State<SellPropertyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppStyle.background,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.orange.shade700, Colors.pink.shade700],
-          ),
-        ),
+        color: AppStyle.primaryDark,
         child: SafeArea(
           child: Column(
             children: [
@@ -171,14 +190,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
                           ),
                           const SizedBox(height: 16),
 
-                          /// Image URL Field
-                          _buildTextField(
-                            controller: _imageUrlController,
-                            label: 'Image URL',
-                            hint: 'https://example.com/image.jpg',
-                            icon: Icons.image,
-                            keyboardType: TextInputType.url,
-                          ),
+                          _buildImageUrlFields(),
                           const SizedBox(height: 16),
 
                           /// Price Field
@@ -205,12 +217,11 @@ class SellPropertyPageState extends State<SellPropertyPage> {
                           _buildRoomSelectors(),
                           const SizedBox(height: 24),
 
-                          /// Description Field
-                          _buildDescriptionField(),
+                          _buildFeatureCheckboxes(),
                           const SizedBox(height: 24),
 
-                          /// Upload Photos Button
-                          _buildUploadPhotosButton(),
+                          /// Description Field
+                          _buildDescriptionField(),
                           const SizedBox(height: 32),
 
                           /// Submit Button
@@ -269,19 +280,19 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: Colors.blue.shade50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: Colors.blue.shade100),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: Colors.orange.shade700),
+          const Icon(Icons.info_outline, color: AppStyle.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Fill in the details below to list your property',
               style: TextStyle(
-                color: Colors.orange.shade700,
+                color: AppStyle.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -318,6 +329,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    bool requiredField = true,
   }) {
     return TextFormField(
       controller: controller,
@@ -331,7 +343,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
         fillColor: Colors.grey.shade50,
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
+        if (requiredField && (value == null || value.isEmpty)) {
           return 'Please enter $label';
         }
         return null;
@@ -371,8 +383,8 @@ class SellPropertyPageState extends State<SellPropertyPage> {
                       },
                       icon: const Icon(Icons.remove),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.orange.shade100,
-                        foregroundColor: Colors.orange.shade700,
+                        backgroundColor: Colors.blue.shade50,
+                        foregroundColor: AppStyle.primary,
                       ),
                     ),
                     Text(
@@ -388,8 +400,8 @@ class SellPropertyPageState extends State<SellPropertyPage> {
                       },
                       icon: const Icon(Icons.add),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.orange.shade100,
-                        foregroundColor: Colors.orange.shade700,
+                        backgroundColor: Colors.blue.shade50,
+                        foregroundColor: AppStyle.primary,
                       ),
                     ),
                   ],
@@ -428,8 +440,8 @@ class SellPropertyPageState extends State<SellPropertyPage> {
                       },
                       icon: const Icon(Icons.remove),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.orange.shade100,
-                        foregroundColor: Colors.orange.shade700,
+                        backgroundColor: Colors.blue.shade50,
+                        foregroundColor: AppStyle.primary,
                       ),
                     ),
                     Text(
@@ -445,8 +457,8 @@ class SellPropertyPageState extends State<SellPropertyPage> {
                       },
                       icon: const Icon(Icons.add),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.orange.shade100,
-                        foregroundColor: Colors.orange.shade700,
+                        backgroundColor: Colors.blue.shade50,
+                        foregroundColor: AppStyle.primary,
                       ),
                     ),
                   ],
@@ -480,22 +492,73 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     );
   }
 
-  /// Builds upload photos button
-  Widget _buildUploadPhotosButton() {
-    return OutlinedButton.icon(
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo upload coming soon!')),
-        );
-      },
-      icon: const Icon(Icons.add_photo_alternate),
-      label: const Text('Upload Photos'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.orange.shade700,
-        side: BorderSide(color: Colors.orange.shade700, width: 2),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+  Widget _buildImageUrlFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Images',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        ...List.generate(_imageControllers.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == _imageControllers.length - 1 ? 0 : 12,
+            ),
+            child: _buildTextField(
+              controller: _imageControllers[index],
+              label: index == 0 ? 'Image URL 1' : 'Image URL ${index + 1}',
+              hint: 'https://example.com/image.jpg',
+              icon: Icons.image_outlined,
+              keyboardType: TextInputType.url,
+              requiredField: index == 0,
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildFeatureCheckboxes() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Features',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _featureOptions.map((feature) {
+            final selected = _selectedFeatures.contains(feature);
+            return FilterChip(
+              label: Text(feature),
+              selected: selected,
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    _selectedFeatures.add(feature);
+                  } else {
+                    _selectedFeatures.remove(feature);
+                  }
+                });
+              },
+              selectedColor: Colors.blue.shade50,
+              checkmarkColor: AppStyle.primary,
+              side: BorderSide(
+                color: selected ? AppStyle.primary : Colors.grey.shade300,
+              ),
+              labelStyle: TextStyle(
+                color: selected ? AppStyle.primary : Colors.grey.shade700,
+                fontWeight: FontWeight.w700,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -506,7 +569,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
       child: ElevatedButton(
         onPressed: _submitForm,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.orange.shade700,
+          backgroundColor: AppStyle.primary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

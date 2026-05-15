@@ -25,6 +25,8 @@ class Property {
   /// URL of property image
   final String image;
 
+  final List<String> images;
+
   /// Detailed description
   final String description;
 
@@ -51,6 +53,7 @@ class Property {
     required this.bedrooms,
     required this.bathrooms,
     required this.image,
+    this.images = const [],
     required this.description,
     required this.features,
     required this.ownerName,
@@ -70,6 +73,16 @@ class Property {
     return '${area.toInt()} sq.ft';
   }
 
+  List<String> get galleryImages {
+    final allImages = <String>[
+      if (image.trim().isNotEmpty) image.trim(),
+      ...images
+          .where((item) => item.trim().isNotEmpty)
+          .map((item) => item.trim()),
+    ];
+    return allImages.toSet().toList();
+  }
+
   /// Convert Firestore data into a Property object
   factory Property.fromMap(Map<String, dynamic> data, String id) {
     return Property(
@@ -81,6 +94,7 @@ class Property {
       bedrooms: (data['bedrooms'] as num?)?.toInt() ?? 0,
       bathrooms: (data['bathrooms'] as num?)?.toInt() ?? 0,
       image: data['image']?.toString() ?? '',
+      images: List<String>.from(data['images'] ?? <String>[]),
       description: data['description']?.toString() ?? '',
       features: List<String>.from(data['features'] ?? <String>[]),
       ownerName: data['ownerName']?.toString() ?? 'Unknown Owner',
@@ -99,6 +113,7 @@ class Property {
       'bedrooms': bedrooms,
       'bathrooms': bathrooms,
       'image': image,
+      'images': images,
       'description': description,
       'features': features,
       'ownerName': ownerName,
@@ -228,6 +243,12 @@ class AppStore {
       bathrooms: 2,
       image:
           'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
+      images: [
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
+      ],
       description: 'Modern apartment close to cafes, shops, and main roads.',
       features: ['Lift', 'Parking', 'City View'],
       ownerName: 'Guest',

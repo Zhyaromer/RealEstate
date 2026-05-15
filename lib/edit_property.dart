@@ -389,6 +389,10 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
       bedrooms: _bedrooms,
       bathrooms: _bathrooms,
       image: _imageController.text.trim(),
+      images: [
+        _imageController.text.trim(),
+        ...widget.property.images,
+      ].where((url) => url.isNotEmpty).toSet().toList(),
       description: _descriptionController.text.trim(),
       features: features,
       ownerName: _ownerNameController.text.trim(),

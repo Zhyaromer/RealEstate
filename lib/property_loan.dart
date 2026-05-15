@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'app_style.dart';
 import 'models.dart';
 
 /// Property Loan Page
@@ -122,14 +123,9 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppStyle.background,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.green.shade700, Colors.teal.shade700],
-          ),
-        ),
+        color: AppStyle.primaryDark,
         child: SafeArea(
           child: Column(
             children: [
@@ -214,7 +210,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
           /// Section title
           Row(
             children: [
-              Icon(Icons.calculate, color: Colors.green.shade700),
+              const Icon(Icons.calculate, color: AppStyle.primary),
               const SizedBox(width: 8),
               const Text(
                 'Loan Calculator',
@@ -265,12 +261,12 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green.shade700, Colors.teal.shade600],
+                colors: [AppStyle.primaryDark, AppStyle.primary],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.shade700.withOpacity(0.3),
+                  color: AppStyle.primary.withOpacity(0.3),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -340,7 +336,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.green.shade700,
+                color: AppStyle.primary,
               ),
             ),
           ],
@@ -350,7 +346,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
           min: min,
           max: max,
           divisions: divisions,
-          activeColor: Colors.green.shade700,
+          activeColor: AppStyle.primary,
           onChanged: onChanged,
         ),
       ],
@@ -390,7 +386,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
             /// Section title
             Row(
               children: [
-                Icon(Icons.assignment, color: Colors.green.shade700),
+                const Icon(Icons.assignment, color: AppStyle.primary),
                 const SizedBox(width: 8),
                 const Text(
                   'Loan Application',
@@ -480,7 +476,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
               child: ElevatedButton(
                 onPressed: _submitApplication,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
+                  backgroundColor: AppStyle.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
