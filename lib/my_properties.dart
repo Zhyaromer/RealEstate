@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'app_style.dart';
 import 'details.dart';
 import 'edit_property.dart';
+import 'firestore_service.dart';
 import 'models.dart';
 import 'sell_property.dart';
 
@@ -17,31 +18,40 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppStyle.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: AppStore.myProperties.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                      itemCount: AppStore.myProperties.length,
-                      itemBuilder: (context, index) {
-                        return _buildPropertyCard(
-                          AppStore.myProperties[index],
-                          index,
-                        );
-                      },
-                    ),
+      body: StreamBuilder<List<Property>>(
+        stream: FirestoreService.myPropertiesStream(),
+        builder: (context, snapshot) {
+          final properties = snapshot.data ?? [];
+          return SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(properties),
+                Expanded(
+                  child: snapshot.connectionState == ConnectionState.waiting
+                      ? const Center(child: CircularProgressIndicator())
+                      : properties.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                              itemCount: properties.length,
+                              itemBuilder: (context, index) {
+                                return _buildPropertyCard(
+                                  properties[index],
+                                  index,
+                                );
+                              },
+                            ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(List<Property> properties) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
       decoration: BoxDecoration(
@@ -103,13 +113,13 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
           Row(
             children: [
               _buildSummaryTile(
-                '${AppStore.myProperties.length}',
+                '${properties.length}',
                 'Listed',
                 Icons.home_work_outlined,
               ),
               const SizedBox(width: 12),
               _buildSummaryTile(
-                _totalValue,
+                _propertiesTotalValue(properties),
                 'Value',
                 Icons.payments_outlined,
               ),
@@ -120,8 +130,8 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
     );
   }
 
-  String get _totalValue {
-    final total = AppStore.myProperties.fold<double>(
+  String _propertiesTotalValue(List<Property> properties) {
+    final total = properties.fold<double>(
       0,
       (sum, property) => sum + property.price,
     );
@@ -306,10 +316,8 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => EditPropertyPage(
-                                property: property,
-                                propertyIndex: index,
-                              ),
+                              builder: (context) =>
+                                  EditPropertyPage(property: property),
                             ),
                           );
                           if (mounted) setState(() {});
@@ -327,7 +335,7 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: () => _confirmDelete(index),
+                        onPressed: () => _confirmDelete(property),
                         icon: const Icon(Icons.delete_outline, size: 18),
                         label: const Text('Delete'),
                         style: FilledButton.styleFrom(
@@ -428,8 +436,7 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
     );
   }
 
-  Future<void> _confirmDelete(int index) async {
-    final property = AppStore.myProperties[index];
+  Future<void> _confirmDelete(Property property) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -451,18 +458,28 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
     );
 
     if (shouldDelete == true && mounted) {
-      _deleteProperty(index);
+      _deleteProperty(property);
     }
   }
 
-  void _deleteProperty(int index) {
-    final removed = AppStore.myProperties[index];
-    setState(() => AppStore.myProperties.removeAt(index));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${removed.title} deleted'),
-        backgroundColor: AppStyle.danger,
-      ),
-    );
+  Future<void> _deleteProperty(Property property) async {
+    try {
+      await FirestoreService.deleteProperty(property);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${property.title} deleted'),
+          backgroundColor: AppStyle.danger,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to delete property: $error'),
+          backgroundColor: AppStyle.danger,
+        ),
+      );
+    }
   }
 }

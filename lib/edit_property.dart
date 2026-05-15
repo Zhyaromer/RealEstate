@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
+import 'firestore_service.dart';
 import 'models.dart';
 
 class EditPropertyPage extends StatefulWidget {
   const EditPropertyPage({
     super.key,
     required this.property,
-    required this.propertyIndex,
   });
 
   final Property property;
-  final int propertyIndex;
 
   @override
   State<EditPropertyPage> createState() => _EditPropertyPageState();
@@ -23,8 +22,6 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
   late final TextEditingController _priceController;
   late final TextEditingController _areaController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _ownerNameController;
-  late final TextEditingController _ownerPhoneController;
   late final List<TextEditingController> _imageControllers;
 
   late int _bedrooms;
@@ -60,8 +57,6 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
     _priceController = TextEditingController(text: property.price.toStringAsFixed(0));
     _areaController = TextEditingController(text: property.area.toStringAsFixed(0));
     _descriptionController = TextEditingController(text: property.description);
-    _ownerNameController = TextEditingController(text: property.ownerName);
-    _ownerPhoneController = TextEditingController(text: property.ownerPhone);
     final gallery = property.galleryImages.take(5).toList();
     _imageControllers = List.generate(5, (index) {
       return TextEditingController(text: index < gallery.length ? gallery[index] : '');
@@ -81,8 +76,6 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
     _priceController.dispose();
     _areaController.dispose();
     _descriptionController.dispose();
-    _ownerNameController.dispose();
-    _ownerPhoneController.dispose();
     for (final controller in _imageControllers) {
       controller.dispose();
     }
@@ -112,19 +105,6 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
                       _buildField(_titleController, 'Property Title', Icons.home_outlined),
                       const SizedBox(height: 14),
                       _buildField(_locationController, 'Location', Icons.location_on_outlined),
-                      const SizedBox(height: 14),
-                      _buildField(
-                        _ownerNameController,
-                        'Owner Name',
-                        Icons.person_outline,
-                      ),
-                      const SizedBox(height: 14),
-                      _buildField(
-                        _ownerPhoneController,
-                        'Owner Phone',
-                        Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                      ),
                       const SizedBox(height: 14),
                       _buildImageUrlFields(),
                       const SizedBox(height: 14),
@@ -447,7 +427,7 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
     );
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     final images = _imageControllers
@@ -456,7 +436,7 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
         .take(5)
         .toList();
 
-    AppStore.myProperties[widget.propertyIndex] = Property(
+    final updatedProperty = Property(
       id: widget.property.id,
       title: _titleController.text.trim(),
       location: _locationController.text.trim(),
@@ -468,17 +448,33 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
       images: images,
       description: _descriptionController.text.trim(),
       features: _selectedFeatures.toList(),
-      ownerName: _ownerNameController.text.trim(),
-      ownerPhone: _ownerPhoneController.text.trim(),
+      ownerName: widget.property.ownerName,
+      ownerPhone: widget.property.ownerPhone,
       propertyType: _propertyType,
+      ownerId: widget.property.ownerId,
+      ownerEmail: widget.property.ownerEmail,
+      status: widget.property.status,
+      createdAt: widget.property.createdAt,
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Property updated'),
-        backgroundColor: AppStyle.success,
-      ),
-    );
-    Navigator.pop(context);
+    try {
+      await FirestoreService.updateProperty(updatedProperty);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Property updated'),
+          backgroundColor: AppStyle.success,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to update property: $error'),
+          backgroundColor: AppStyle.danger,
+        ),
+      );
+    }
   }
 }

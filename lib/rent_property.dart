@@ -1,33 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
-
-/// Rental Property Model
-/// Represents a property available for rent
-class RentalProperty {
-  final int id;
-  final String title;
-  final String location;
-  final double monthlyRent;
-  final double area;
-  final int bedrooms;
-  final int bathrooms;
-  final String image;
-  final String furnishing; // Furnished, Semi-Furnished, Unfurnished
-  final String availableFrom;
-
-  RentalProperty({
-    required this.id,
-    required this.title,
-    required this.location,
-    required this.monthlyRent,
-    required this.area,
-    required this.bedrooms,
-    required this.bathrooms,
-    required this.image,
-    required this.furnishing,
-    required this.availableFrom,
-  });
-}
+import 'firestore_service.dart';
+import 'models.dart';
 
 /// Rent Property Page
 /// Shows list of properties available for rent
@@ -42,48 +16,7 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
   /// Filter selections
   String _selectedFurnishing = 'All';
 
-  /// Sample rental properties data
-  final List<RentalProperty> _rentalProperties = [
-    RentalProperty(
-      id: 1,
-      title: '2BHK Apartment',
-      location: 'Mumbai, Maharashtra',
-      monthlyRent: 35000,
-      area: 1200,
-      bedrooms: 2,
-      bathrooms: 2,
-      image:
-          'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800',
-      furnishing: 'Fully Furnished',
-      availableFrom: 'Jan 1, 2025',
-    ),
-    RentalProperty(
-      id: 2,
-      title: '3BHK Villa',
-      location: 'Bangalore, Karnataka',
-      monthlyRent: 55000,
-      area: 2000,
-      bedrooms: 3,
-      bathrooms: 3,
-      image:
-          'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800',
-      furnishing: 'Semi Furnished',
-      availableFrom: 'Jan 15, 2025',
-    ),
-    RentalProperty(
-      id: 3,
-      title: 'Studio Apartment',
-      location: 'Pune, Maharashtra',
-      monthlyRent: 18000,
-      area: 600,
-      bedrooms: 1,
-      bathrooms: 1,
-      image:
-          'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800',
-      furnishing: 'Fully Furnished',
-      availableFrom: 'Available Now',
-    ),
-  ];
+  List<RentalProperty> _rentalProperties = [];
 
   /// filter
   List<RentalProperty> get _filteredProperties {
@@ -99,35 +32,38 @@ class _RentPropertyPageState extends State<RentPropertyPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppStyle.background,
-      body: Container(
-        color: AppStyle.primaryDark,
-        child: SafeArea(
-          child: Column(
-            children: [
-              /// Header
-              _buildHeader(),
-
-              /// Filter chips
-              _buildFilters(),
-
-              /// background cardaka
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 20),
-                  decoration: const BoxDecoration(
-                    color: AppStyle.background,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(30),
+      body: StreamBuilder<List<RentalProperty>>(
+        stream: FirestoreService.rentalPropertiesStream(),
+        builder: (context, snapshot) {
+          _rentalProperties = snapshot.data ?? [];
+          return Container(
+            color: AppStyle.primaryDark,
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  _buildFilters(),
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 20),
+                      decoration: const BoxDecoration(
+                        color: AppStyle.background,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(30),
+                        ),
+                      ),
+                      child: snapshot.connectionState == ConnectionState.waiting
+                          ? const Center(child: CircularProgressIndicator())
+                          : _filteredProperties.isEmpty
+                              ? _buildEmptyState()
+                              : _buildPropertiesList(),
                     ),
                   ),
-                  child: _filteredProperties.isEmpty
-                      ? _buildEmptyState()
-                      : _buildPropertiesList(),
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

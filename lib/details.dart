@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
+import 'firestore_service.dart';
 import 'models.dart';
 
 class PropertyDetailsPage extends StatefulWidget {
@@ -614,14 +615,27 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${property.title} purchased successfully!'),
-                  backgroundColor: AppStyle.success,
-                ),
-              );
+            onPressed: () async {
+              try {
+                await FirestoreService.addPurchase(property);
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${property.title} purchased successfully!'),
+                    backgroundColor: AppStyle.success,
+                  ),
+                );
+              } catch (error) {
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Unable to complete purchase: $error'),
+                    backgroundColor: AppStyle.danger,
+                  ),
+                );
+              }
             },
             style: FilledButton.styleFrom(backgroundColor: AppStyle.success),
             child: const Text('Complete Purchase'),

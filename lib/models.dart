@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 /// Property data model
 /// Represents a real estate property with all its details
 class Property {
@@ -42,6 +44,11 @@ class Property {
   /// Property type
   final String propertyType;
 
+  final String ownerId;
+  final String ownerEmail;
+  final String status;
+  final DateTime? createdAt;
+
   /// Constructor - Creates a new Property instance
   /// All fields are required
   Property({
@@ -59,6 +66,10 @@ class Property {
     required this.ownerName,
     required this.ownerPhone,
     required this.propertyType,
+    this.ownerId = '',
+    this.ownerEmail = '',
+    this.status = 'active',
+    this.createdAt,
   });
 
   /// Formats price to display in millions with 1 decimal place
@@ -84,6 +95,7 @@ class Property {
 
   /// Convert Firestore data into a Property object
   factory Property.fromMap(Map<String, dynamic> data, String id) {
+    final createdAtValue = data['createdAt'];
     return Property(
       id: id,
       title: data['title']?.toString() ?? 'Unknown Property',
@@ -99,6 +111,10 @@ class Property {
       ownerName: data['ownerName']?.toString() ?? 'Unknown Owner',
       ownerPhone: data['ownerPhone']?.toString() ?? '',
       propertyType: data['propertyType']?.toString() ?? 'Apartment',
+      ownerId: data['ownerId']?.toString() ?? '',
+      ownerEmail: data['ownerEmail']?.toString() ?? '',
+      status: data['status']?.toString() ?? 'active',
+      createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
     );
   }
 
@@ -118,8 +134,68 @@ class Property {
       'ownerName': ownerName,
       'ownerPhone': ownerPhone,
       'propertyType': propertyType,
-      'createdAt': DateTime.now().toIso8601String(),
+      'ownerId': ownerId,
+      'ownerEmail': ownerEmail,
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
     };
+  }
+}
+
+class RentalProperty {
+  final String id;
+  final String title;
+  final String location;
+  final double monthlyRent;
+  final double area;
+  final int bedrooms;
+  final int bathrooms;
+  final String image;
+  final String furnishing;
+  final String availableFrom;
+  final String ownerId;
+  final String ownerName;
+  final String ownerPhone;
+  final String status;
+  final DateTime? createdAt;
+
+  RentalProperty({
+    required this.id,
+    required this.title,
+    required this.location,
+    required this.monthlyRent,
+    required this.area,
+    required this.bedrooms,
+    required this.bathrooms,
+    required this.image,
+    required this.furnishing,
+    required this.availableFrom,
+    this.ownerId = '',
+    this.ownerName = '',
+    this.ownerPhone = '',
+    this.status = 'active',
+    this.createdAt,
+  });
+
+  factory RentalProperty.fromMap(Map<String, dynamic> data, String id) {
+    final createdAtValue = data['createdAt'];
+    return RentalProperty(
+      id: id,
+      title: data['title']?.toString() ?? 'Rental Property',
+      location: data['location']?.toString() ?? 'Unknown Location',
+      monthlyRent: (data['monthlyRent'] as num?)?.toDouble() ?? 0,
+      area: (data['area'] as num?)?.toDouble() ?? 0,
+      bedrooms: (data['bedrooms'] as num?)?.toInt() ?? 0,
+      bathrooms: (data['bathrooms'] as num?)?.toInt() ?? 0,
+      image: data['image']?.toString() ?? '',
+      furnishing: data['furnishing']?.toString() ?? 'Unfurnished',
+      availableFrom: data['availableFrom']?.toString() ?? 'Available Now',
+      ownerId: data['ownerId']?.toString() ?? '',
+      ownerName: data['ownerName']?.toString() ?? '',
+      ownerPhone: data['ownerPhone']?.toString() ?? '',
+      status: data['status']?.toString() ?? 'active',
+      createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
+    );
   }
 }
 
@@ -136,6 +212,7 @@ class LoanApplication {
   final double monthlyEmi;
   final String status;
   final DateTime submittedAt;
+  final String userId;
 
   LoanApplication({
     required this.id,
@@ -150,7 +227,47 @@ class LoanApplication {
     required this.monthlyEmi,
     required this.status,
     required this.submittedAt,
+    this.userId = '',
   });
+
+  factory LoanApplication.fromMap(Map<String, dynamic> data, String id) {
+    final submittedAtValue = data['submittedAt'];
+    return LoanApplication(
+      id: id,
+      name: data['name']?.toString() ?? '',
+      email: data['email']?.toString() ?? '',
+      phone: data['phone']?.toString() ?? '',
+      employmentType: data['employmentType']?.toString() ?? '',
+      monthlyIncome: (data['monthlyIncome'] as num?)?.toDouble() ?? 0,
+      loanAmount: (data['loanAmount'] as num?)?.toDouble() ?? 0,
+      interestRate: (data['interestRate'] as num?)?.toDouble() ?? 0,
+      tenureYears: (data['tenureYears'] as num?)?.toInt() ?? 0,
+      monthlyEmi: (data['monthlyEmi'] as num?)?.toDouble() ?? 0,
+      status: data['status']?.toString() ?? 'Under Review',
+      submittedAt: submittedAtValue is Timestamp
+          ? submittedAtValue.toDate()
+          : DateTime.now(),
+      userId: data['userId']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'employmentType': employmentType,
+      'monthlyIncome': monthlyIncome,
+      'loanAmount': loanAmount,
+      'interestRate': interestRate,
+      'tenureYears': tenureYears,
+      'monthlyEmi': monthlyEmi,
+      'status': status,
+      'userId': userId,
+      'submittedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+  }
 }
 
 class UserProfile {
@@ -171,129 +288,4 @@ class AppStore {
     email: 'guest@email.com',
     phone: '+964 750 000 0000',
   );
-
-  static final List<Property> availableProperties = [
-    Property(
-      id: 'p1',
-      title: 'Modern Luxury Villa',
-      location: 'Mumbai, Maharashtra',
-      price: 5000000,
-      area: 3500,
-      bedrooms: 4,
-      bathrooms: 3,
-      image:
-          'https://cf.bstatic.com/xdata/images/hotel/max1024x768/466378675.jpg?k=47439be8a91e422a1dbef4f02630d6c86f1266a815d7bd8f21b2c5ce0492bcc1&o=',
-      images: [
-        'https://cf.bstatic.com/xdata/images/hotel/max1024x768/466378675.jpg?k=47439be8a91e422a1dbef4f02630d6c86f1266a815d7bd8f21b2c5ce0492bcc1&o=',
-        'https://cf.bstatic.com/xdata/images/hotel/max1024x768/466378675.jpg?k=47439be8a91e422a1dbef4f02630d6c86f1266a815d7bd8f21b2c5ce0492bcc1&o=',
-        'https://cf.bstatic.com/xdata/images/hotel/max1024x768/466378675.jpg?k=47439be8a91e422a1dbef4f02630d6c86f1266a815d7bd8f21b2c5ce0492bcc1&o=',
-        'https://cf.bstatic.com/xdata/images/hotel/max1024x768/466378675.jpg?k=47439be8a91e422a1dbef4f02630d6c86f1266a815d7bd8f21b2c5ce0492bcc1&o=',
-      ],
-      description:
-          'Stunning modern villa with panoramic views and premium finishes.',
-      features: ['Pool', 'Garden', 'Gym', 'Security', 'Parking'],
-      ownerName: 'Rajesh Kumar',
-      ownerPhone: '+91 9876543210',
-      propertyType: 'Villa',
-    ),
-    Property(
-      id: 'p2',
-      title: 'Modern Apartment',
-      location: 'Bangalore, Karnataka',
-      price: 3500000,
-      area: 2200,
-      bedrooms: 3,
-      bathrooms: 2,
-      image:
-          'https://www.thehousedesigners.com/images/plans/01/UDC/bulk/7295/e276-gao_residence_view1_m.webp',
-      description:
-          'Beautiful apartment in gated community with excellent amenities.',
-      features: ['Balcony', 'Lift', 'Parking', 'Club', 'Play Area'],
-      ownerName: 'Priya Sharma',
-      ownerPhone: '+91 9876543211',
-      propertyType: 'Apartment',
-    ),
-    Property(
-      id: 'p3',
-      title: 'Beachfront Property',
-      location: 'Goa, India',
-      price: 7500000,
-      area: 4000,
-      bedrooms: 5,
-      bathrooms: 4,
-      image:
-          'https://modernhb.com/wp-content/uploads/sites/6/2025/07/beachhousesJL25.jpeg',
-      description: 'Exclusive beachfront property with private beach access.',
-      features: ['Beach', 'Terrace', 'Theater', 'Wine Cellar', 'Hot Tub'],
-      ownerName: 'Vikram Patel',
-      ownerPhone: '+91 9876543212',
-      propertyType: 'Villa',
-    ),
-  ];
-
-  static final Set<String> savedPropertyIds = {'p1', 'p2'};
-
-  static List<Property> get savedProperties {
-    return availableProperties
-        .where((property) => savedPropertyIds.contains(property.id))
-        .toList();
-  }
-
-  static final List<Property> myProperties = [
-    Property(
-      id: 'mine-1',
-      title: 'Sunny Family House',
-      location: 'Erbil, Kurdistan',
-      price: 420000,
-      area: 2400,
-      bedrooms: 4,
-      bathrooms: 3,
-      image:
-          'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=900',
-      description: 'Bright family home with a private garden and parking.',
-      features: ['Garden', 'Parking', 'Balcony', 'Security'],
-      ownerName: 'Guest',
-      ownerPhone: '+964 750 000 0000',
-      propertyType: 'House',
-    ),
-    Property(
-      id: 'mine-2',
-      title: 'City View Apartment',
-      location: 'Sulaymaniyah, Kurdistan',
-      price: 185000,
-      area: 1250,
-      bedrooms: 2,
-      bathrooms: 2,
-      image:
-          'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
-      images: [
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900',
-      ],
-      description: 'Modern apartment close to cafes, shops, and main roads.',
-      features: ['Lift', 'Parking', 'City View'],
-      ownerName: 'Guest',
-      ownerPhone: '+964 750 000 0000',
-      propertyType: 'Apartment',
-    ),
-  ];
-
-  static final List<LoanApplication> loanApplications = [
-    LoanApplication(
-      id: 'loan-1',
-      name: 'Guest User',
-      email: 'guest@email.com',
-      phone: '+964 750 000 0000',
-      employmentType: 'Salaried',
-      monthlyIncome: 2500,
-      loanAmount: 180000,
-      interestRate: 8.5,
-      tenureYears: 20,
-      monthlyEmi: 1562,
-      status: 'Under Review',
-      submittedAt: DateTime(2026, 5, 10),
-    ),
-  ];
 }

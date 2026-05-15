@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'app_style.dart';
+import 'auth_service.dart';
+import 'firestore_service.dart';
 import 'models.dart';
 
 /// Property Loan Page
@@ -52,6 +54,18 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
   double get _totalInterest => _totalAmount - _loanAmount;
 
   @override
+  void initState() {
+    super.initState();
+    _nameController.text = AppStore.currentUser.username == 'Guest'
+        ? ''
+        : AppStore.currentUser.username;
+    _emailController.text = AppStore.currentUser.email == 'guest@email.com'
+        ? ''
+        : AppStore.currentUser.email;
+    _phoneController.text = AppStore.currentUser.phone;
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
@@ -68,11 +82,9 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
     }
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      AppStore.loanApplications.insert(
-        0,
+      await FirestoreService.addLoanApplication(
         LoanApplication(
-          id: 'loan-${DateTime.now().millisecondsSinceEpoch}',
+          id: '',
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
           phone: _phoneController.text.trim(),
@@ -84,6 +96,7 @@ class _PropertyLoanPageState extends State<PropertyLoanPage> {
           monthlyEmi: _emi,
           status: 'Under Review',
           submittedAt: DateTime.now(),
+          userId: AuthService.currentUser?.uid ?? '',
         ),
       );
       if (!mounted) return;

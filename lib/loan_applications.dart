@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
+import 'firestore_service.dart';
 import 'models.dart';
 import 'property_loan.dart';
 
@@ -20,17 +21,23 @@ class _LoanApplicationsPageState extends State<LoanApplicationsPage> {
           children: [
             _buildHeader(),
             Expanded(
-              child: AppStore.loanApplications.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-                      itemCount: AppStore.loanApplications.length,
-                      itemBuilder: (context, index) {
-                        return _buildApplicationCard(
-                          AppStore.loanApplications[index],
-                        );
-                      },
-                    ),
+              child: StreamBuilder<List<LoanApplication>>(
+                stream: FirestoreService.loanApplicationsStream(),
+                builder: (context, snapshot) {
+                  final applications = snapshot.data ?? [];
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (applications.isEmpty) return _buildEmptyState();
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                    itemCount: applications.length,
+                    itemBuilder: (context, index) {
+                      return _buildApplicationCard(applications[index]);
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

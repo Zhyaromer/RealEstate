@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
 import 'details.dart';
+import 'firestore_service.dart';
 import 'models.dart';
 
 class SavedHousesPage extends StatefulWidget {
@@ -13,27 +14,34 @@ class SavedHousesPage extends StatefulWidget {
 class _SavedHousesPageState extends State<SavedHousesPage> {
   @override
   Widget build(BuildContext context) {
-    final savedHouses = AppStore.savedProperties;
-
     return Scaffold(
       backgroundColor: AppStyle.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(savedHouses.length),
-            Expanded(
-              child: savedHouses.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-                      itemCount: savedHouses.length,
-                      itemBuilder: (context, index) {
-                        return _buildSavedCard(savedHouses[index]);
-                      },
-                    ),
+      body: StreamBuilder<List<Property>>(
+        stream: FirestoreService.savedPropertiesStream(),
+        builder: (context, snapshot) {
+          final savedHouses = snapshot.data ?? [];
+          return SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(savedHouses.length),
+                Expanded(
+                  child: snapshot.connectionState == ConnectionState.waiting
+                      ? const Center(child: CircularProgressIndicator())
+                      : savedHouses.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                              itemCount: savedHouses.length,
+                              itemBuilder: (context, index) {
+                                return _buildSavedCard(savedHouses[index]);
+                              },
+                            ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -161,9 +169,10 @@ class _SavedHousesPageState extends State<SavedHousesPage> {
                         ),
                         IconButton(
                           onPressed: () {
-                            setState(() {
-                              AppStore.savedPropertyIds.remove(property.id);
-                            });
+                            FirestoreService.toggleSavedProperty(
+                              propertyId: property.id,
+                              currentlySaved: true,
+                            );
                           },
                           icon: const Icon(Icons.favorite_rounded),
                           color: AppStyle.danger,

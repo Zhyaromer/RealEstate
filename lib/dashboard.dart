@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'app_style.dart';
 import 'auth_service.dart';
+import 'firestore_service.dart';
 import 'loan_applications.dart';
 import 'models.dart';
 import 'my_properties.dart';
@@ -18,12 +20,42 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  int _listedCount = 0;
+  int _savedCount = 0;
+  int _loanCount = 0;
+  StreamSubscription<List<Property>>? _myPropertiesSubscription;
+  StreamSubscription<Set<String>>? _savedSubscription;
+  StreamSubscription<List<LoanApplication>>? _loanSubscription;
+
   @override
   void initState() {
     super.initState();
     AuthService.loadCurrentUserProfile().then((_) {
       if (mounted) setState(() {});
     });
+    _myPropertiesSubscription = FirestoreService.myPropertiesStream().listen(
+      (properties) {
+        if (mounted) setState(() => _listedCount = properties.length);
+      },
+    );
+    _savedSubscription = FirestoreService.savedPropertyIdsStream().listen(
+      (ids) {
+        if (mounted) setState(() => _savedCount = ids.length);
+      },
+    );
+    _loanSubscription = FirestoreService.loanApplicationsStream().listen(
+      (applications) {
+        if (mounted) setState(() => _loanCount = applications.length);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _myPropertiesSubscription?.cancel();
+    _savedSubscription?.cancel();
+    _loanSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -99,7 +131,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       icon: Icons.favorite_border_rounded,
                       title: 'Saved Houses',
                       subtitle: 'Review homes you saved while browsing',
-                      count: '${AppStore.savedProperties.length} saved',
+                      count: '$_savedCount saved',
                       color: AppStyle.primary,
                       page: const SavedHousesPage(),
                     ),
@@ -109,7 +141,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       icon: Icons.home_work_outlined,
                       title: 'My Properties',
                       subtitle: 'Edit, delete, and manage your listings',
-                      count: '${AppStore.myProperties.length} active',
+                      count: '$_listedCount active',
                       color: AppStyle.primary,
                       page: const MyPropertiesPage(),
                     ),
@@ -119,7 +151,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       icon: Icons.request_quote_outlined,
                       title: 'Loan Applications',
                       subtitle: 'View submitted applications and status',
-                      count: '${AppStore.loanApplications.length} submitted',
+                      count: '$_loanCount submitted',
                       color: AppStyle.primary,
                       page: const LoanApplicationsPage(),
                     ),
@@ -191,7 +223,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Expanded(
                   child: _buildHeroMetric(
                     'Listed',
-                    '${AppStore.myProperties.length}',
+                    '$_listedCount',
                     Icons.real_estate_agent_outlined,
                   ),
                 ),
@@ -199,7 +231,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Expanded(
                   child: _buildHeroMetric(
                     'Loan Apps',
-                    '${AppStore.loanApplications.length}',
+                    '$_loanCount',
                     Icons.receipt_long_outlined,
                   ),
                 ),
@@ -207,7 +239,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Expanded(
                   child: _buildHeroMetric(
                     'Saved',
-                    '${AppStore.savedProperties.length}',
+                    '$_savedCount',
                     Icons.favorite_border_rounded,
                   ),
                 ),

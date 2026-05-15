@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
+import 'auth_service.dart';
+import 'firestore_service.dart';
 import 'models.dart';
 
 /// Sell Property Page
@@ -22,7 +24,6 @@ class SellPropertyPageState extends State<SellPropertyPage> {
   final _priceController = TextEditingController();
   final _areaController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _ownerPhoneController = TextEditingController();
   final List<TextEditingController> _imageControllers = List.generate(
     5,
     (_) => TextEditingController(),
@@ -62,7 +63,6 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     _priceController.dispose();
     _areaController.dispose();
     _descriptionController.dispose();
-    _ownerPhoneController.dispose();
     for (final controller in _imageControllers) {
       controller.dispose();
     }
@@ -76,7 +76,6 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     }
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
       final price = double.tryParse(_priceController.text.trim()) ?? 0;
       final area = double.tryParse(_areaController.text.trim()) ?? 0;
       final images = _imageControllers
@@ -84,10 +83,9 @@ class SellPropertyPageState extends State<SellPropertyPage> {
           .where((url) => url.isNotEmpty)
           .take(5)
           .toList();
-      AppStore.myProperties.insert(
-        0,
+      await FirestoreService.addProperty(
         Property(
-          id: 'mine-${DateTime.now().millisecondsSinceEpoch}',
+          id: '',
           title: _titleController.text.trim(),
           location: _locationController.text.trim(),
           price: price,
@@ -99,8 +97,11 @@ class SellPropertyPageState extends State<SellPropertyPage> {
           description: _descriptionController.text.trim(),
           features: _selectedFeatures.toList(),
           ownerName: AppStore.currentUser.username,
-          ownerPhone: _ownerPhoneController.text.trim(),
+          ownerPhone: AppStore.currentUser.phone,
           propertyType: _propertyType,
+          ownerId: AuthService.currentUser?.uid ?? '',
+          ownerEmail: AuthService.currentUser?.email ?? '',
+          status: 'active',
         ),
       );
       if (!mounted) return;
@@ -129,7 +130,6 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     _priceController.clear();
     _areaController.clear();
     _descriptionController.clear();
-    _ownerPhoneController.clear();
     for (final controller in _imageControllers) {
       controller.clear();
     }
@@ -195,16 +195,6 @@ class SellPropertyPageState extends State<SellPropertyPage> {
                             label: 'Location',
                             hint: 'e.g., Mumbai, Maharashtra',
                             icon: Icons.location_on,
-                          ),
-                          const SizedBox(height: 16),
-
-                          /// Owner Phone Field
-                          _buildTextField(
-                            controller: _ownerPhoneController,
-                            label: 'Owner Phone',
-                            hint: '+91 9876543210',
-                            icon: Icons.phone,
-                            keyboardType: TextInputType.phone,
                           ),
                           const SizedBox(height: 16),
 

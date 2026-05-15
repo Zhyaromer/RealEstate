@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_style.dart';
 import 'details.dart';
+import 'firestore_service.dart';
 import 'models.dart';
 
 class PropertiesPage extends StatefulWidget {
@@ -14,30 +15,12 @@ class _PropertiesPageState extends State<PropertiesPage> {
   int _selectedTab = 0;
   String _selectedType = 'All';
   String _selectedBudget = 'Any';
-
-  final List<Map<String, dynamic>> _purchaseHistory = [
-    {
-      'title': 'Luxury Villa',
-      'location': 'Mumbai, Maharashtra',
-      'price': 5000000,
-      'date': 'Dec 15, 2024',
-      'status': 'Completed',
-      'image':
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800',
-    },
-    {
-      'title': 'City Apartment',
-      'location': 'Bangalore, Karnataka',
-      'price': 3500000,
-      'date': 'Nov 20, 2024',
-      'status': 'Completed',
-      'image':
-          'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800',
-    },
-  ];
+  List<Property> _properties = [];
+  Set<String> _savedPropertyIds = {};
+  List<Map<String, dynamic>> _purchaseHistory = [];
 
   List<Property> get _filteredProperties {
-    return AppStore.availableProperties.where((property) {
+    return _properties.where((property) {
       final typeMatches =
           _selectedType == 'All' || property.propertyType == _selectedType;
       final budgetMatches = switch (_selectedBudget) {
@@ -54,17 +37,32 @@ class _PropertiesPageState extends State<PropertiesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppStyle.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: _selectedTab == 0
-                  ? _buildAvailableContent()
-                  : _buildPurchaseHistory(),
-            ),
-          ],
-        ),
+      body: StreamBuilder<List<Property>>(
+        stream: FirestoreService.propertiesStream(),
+        builder: (context, propertySnapshot) {
+          _properties = propertySnapshot.data ?? [];
+          return StreamBuilder<Set<String>>(
+            stream: FirestoreService.savedPropertyIdsStream(),
+            builder: (context, savedSnapshot) {
+              _savedPropertyIds = savedSnapshot.data ?? {};
+              return SafeArea(
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    Expanded(
+                      child: _selectedTab == 0
+                          ? _buildAvailableContent(
+                              isLoading: propertySnapshot.connectionState ==
+                                  ConnectionState.waiting,
+                            )
+                          : _buildPurchaseHistory(),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -164,7 +162,11 @@ class _PropertiesPageState extends State<PropertiesPage> {
     );
   }
 
-  Widget _buildAvailableContent() {
+  Widget _buildAvailableContent({required bool isLoading}) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       children: [
         _buildFilters(),
@@ -259,7 +261,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
   }
 
   Widget _buildPropertyCard(Property property) {
-    final isSaved = AppStore.savedPropertyIds.contains(property.id);
+    final isSaved = _savedPropertyIds.contains(property.id);
 
     return InkWell(
       borderRadius: BorderRadius.circular(24),
@@ -318,14 +320,11 @@ class _PropertiesPageState extends State<PropertiesPage> {
                     top: 10,
                     right: 10,
                     child: IconButton.filled(
-                      onPressed: () {
-                        setState(() {
-                          if (isSaved) {
-                            AppStore.savedPropertyIds.remove(property.id);
-                          } else {
-                            AppStore.savedPropertyIds.add(property.id);
-                          }
-                        });
+                      onPressed: () async {
+                        await FirestoreService.toggleSavedProperty(
+                          propertyId: property.id,
+                          currentlySaved: isSaved,
+                        );
                       },
                       icon: Icon(
                         isSaved
@@ -455,11 +454,23 @@ class _PropertiesPageState extends State<PropertiesPage> {
   }
 
   Widget _buildPurchaseHistory() {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-      itemCount: _purchaseHistory.length,
-      itemBuilder: (context, index) {
-        return _buildHistoryCard(_purchaseHistory[index]);
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.purchaseHistoryStream(),
+      builder: (context, snapshot) {
+        _purchaseHistory = snapshot.data ?? [];
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (_purchaseHistory.isEmpty) {
+          return _buildHistoryEmptyState();
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+          itemCount: _purchaseHistory.length,
+          itemBuilder: (context, index) {
+            return _buildHistoryCard(_purchaseHistory[index]);
+          },
+        );
       },
     );
   }
@@ -544,7 +555,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      purchase['date'],
+                      _formatDate(purchase['purchasedDate'] as DateTime),
                       style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                     ),
                   ],
@@ -555,6 +566,24 @@ class _PropertiesPageState extends State<PropertiesPage> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   Widget _buildHistoryStatus(String status) {
@@ -591,6 +620,32 @@ class _PropertiesPageState extends State<PropertiesPage> {
             const SizedBox(height: 8),
             Text(
               'Try changing the property type or budget filter.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.receipt_long_outlined,
+                size: 72, color: Colors.grey.shade400),
+            const SizedBox(height: 14),
+            const Text(
+              'No purchase history',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Purchased homes will show up here.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade600),
             ),
