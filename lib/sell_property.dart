@@ -108,7 +108,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
       _clearForm();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Complete! Property listed successfully.'),
+          content: Text('Property submitted for admin approval.'),
           backgroundColor: AppStyle.success,
         ),
       );

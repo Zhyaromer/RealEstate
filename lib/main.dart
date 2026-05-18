@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'admin_dashboard.dart';
 import 'auth_gate.dart';
 import 'dashboard.dart';
 import 'firebase_options.dart';
@@ -46,6 +47,8 @@ class RealEstateApp extends StatelessWidget {
       /// Define named routes for easy navigation
       routes: {
         '/login': (context) => const LoginPage(),
+        '/home': (context) => const AuthGate(),
+        '/admin-dashboard': (context) => const AdminDashboardPage(),
         '/signup': (context) => const SignUpPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/verify-email': (context) => const VerifyEmailPage(),

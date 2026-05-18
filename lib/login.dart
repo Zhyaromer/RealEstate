@@ -57,7 +57,10 @@ class _LoginPageState extends State<LoginPage> {
       await AuthService.login(email: email, password: password);
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacementNamed(
+        context,
+        AuthService.currentUser == null ? '/login' : '/home',
+      );
     } catch (error) {
       if (!mounted) return;
       _showMessage(AuthService.friendlyError(error), Colors.red);

@@ -39,15 +39,18 @@ class AuthService {
       'username': username,
       'email': email,
       'phone': phone,
+      'role': 'user',
       'emailVerified': false,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
     AppStore.currentUser = UserProfile(
+      uid: user.uid,
       username: username,
       email: email,
       phone: phone,
+      role: 'user',
     );
   }
 
@@ -111,19 +114,24 @@ class AuthService {
     return _auth.sendPasswordResetEmail(email: email);
   }
 
-  static Future<void> loadCurrentUserProfile() async {
+  static Future<UserProfile?> loadCurrentUserProfile() async {
     final user = _auth.currentUser;
-    if (user == null) return;
+    if (user == null) return null;
 
     final snapshot = await _firestore.collection('users').doc(user.uid).get();
     final data = snapshot.data();
 
     AppStore.currentUser = UserProfile(
+      uid: user.uid,
       username:
           data?['username']?.toString() ?? user.displayName ?? 'User',
       email: data?['email']?.toString() ?? user.email ?? '',
       phone: data?['phone']?.toString() ?? '',
+      role: data?['role']?.toString().trim().toLowerCase() == 'admin'
+          ? 'admin'
+          : 'user',
     );
+    return AppStore.currentUser;
   }
 
   static Future<void> signOut() {
@@ -131,6 +139,7 @@ class AuthService {
       username: 'Guest',
       email: 'guest@email.com',
       phone: '+964 750 000 0000',
+      role: 'user',
     );
     return _auth.signOut();
   }

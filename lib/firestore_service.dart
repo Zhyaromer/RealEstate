@@ -51,6 +51,17 @@ class FirestoreService {
     }
   }
 
+  static Future<void> _assertAdmin() async {
+    final doc = await _firestore.collection('users').doc(_user.uid).get();
+    final role = doc.data()?['role']?.toString().trim().toLowerCase();
+    if (role != 'admin') {
+      throw FirebaseAuthException(
+        code: 'permission-denied',
+        message: 'Admin access is required.',
+      );
+    }
+  }
+
   static Stream<List<Property>> propertiesStream() {
     return _firestore
         .collection('properties')
@@ -73,11 +84,11 @@ class FirestoreService {
     return _firestore
         .collection('properties')
         .where('ownerId', isEqualTo: _user.uid)
-        .where('status', isEqualTo: 'active')
         .snapshots()
         .map((snapshot) {
       final properties = snapshot.docs
           .map((doc) => Property.fromMap(doc.data(), doc.id))
+          .where((property) => property.status != 'deleted')
           .toList();
       properties.sort((a, b) {
         final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -96,6 +107,7 @@ class FirestoreService {
       ..['ownerEmail'] = profile['email'] ?? ''
       ..['ownerName'] = profile['username'] ?? 'Property Owner'
       ..['ownerPhone'] = profile['phone'] ?? ''
+      ..['status'] = 'pending'
       ..['createdAt'] = FieldValue.serverTimestamp()
       ..['updatedAt'] = FieldValue.serverTimestamp();
     await _firestore.collection('properties').add(data);
@@ -134,6 +146,144 @@ class FirestoreService {
     });
   }
 
+  static Stream<List<Property>> adminPropertiesStream() {
+    return _firestore.collection('properties').snapshots().map((snapshot) {
+      final properties = snapshot.docs
+          .map((doc) => Property.fromMap(doc.data(), doc.id))
+          .toList();
+      properties.sort((a, b) {
+        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bDate.compareTo(aDate);
+      });
+      return properties;
+    });
+  }
+
+  static Stream<List<Property>> pendingPropertiesStream() {
+    return _firestore
+        .collection('properties')
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((snapshot) {
+      final properties = snapshot.docs
+          .map((doc) => Property.fromMap(doc.data(), doc.id))
+          .toList();
+      properties.sort((a, b) {
+        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bDate.compareTo(aDate);
+      });
+      return properties;
+    });
+  }
+
+  static Stream<List<RentalProperty>> adminRentalsStream() {
+    return _firestore.collection('rentals').snapshots().map((snapshot) {
+      final rentals = snapshot.docs
+          .map((doc) => RentalProperty.fromMap(doc.data(), doc.id))
+          .toList();
+      rentals.sort((a, b) {
+        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bDate.compareTo(aDate);
+      });
+      return rentals;
+    });
+  }
+
+  static Stream<List<UserProfile>> adminUsersStream() {
+    return _firestore.collection('users').snapshots().map((snapshot) {
+      final users = snapshot.docs
+          .map((doc) => UserProfile.fromMap(doc.data(), doc.id))
+          .toList();
+      users.sort((a, b) => a.username.toLowerCase().compareTo(b.username.toLowerCase()));
+      return users;
+    });
+  }
+
+  static Future<void> adminAddProperty(Property property) async {
+    await _assertAdmin();
+    final data = property.toMap()
+      ..['status'] = property.status
+      ..['createdAt'] = FieldValue.serverTimestamp()
+      ..['updatedAt'] = FieldValue.serverTimestamp();
+    await _firestore.collection('properties').add(data);
+  }
+
+  static Future<void> adminUpdateProperty(Property property) async {
+    await _assertAdmin();
+    await _firestore.collection('properties').doc(property.id).update({
+      ...property.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<void> adminDeleteProperty(String propertyId) async {
+    await _assertAdmin();
+    await _firestore.collection('properties').doc(propertyId).update({
+      'status': 'deleted',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<void> adminSetPropertyStatus(String propertyId, String status) async {
+    await _assertAdmin();
+    await _firestore.collection('properties').doc(propertyId).update({
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<void> adminAddRental(RentalProperty rental) async {
+    await _assertAdmin();
+    final data = rental.toMap()
+      ..['createdAt'] = FieldValue.serverTimestamp()
+      ..['updatedAt'] = FieldValue.serverTimestamp();
+    await _firestore.collection('rentals').add(data);
+  }
+
+  static Future<void> adminUpdateRental(RentalProperty rental) async {
+    await _assertAdmin();
+    await _firestore.collection('rentals').doc(rental.id).update({
+      ...rental.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<void> adminDeleteRental(String rentalId) async {
+    await _assertAdmin();
+    await _firestore.collection('rentals').doc(rentalId).update({
+      'status': 'deleted',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<void> adminUpsertUser(UserProfile profile) async {
+    await _assertAdmin();
+    final ref = profile.uid.trim().isEmpty
+        ? _firestore.collection('users').doc()
+        : _firestore.collection('users').doc(profile.uid);
+    await ref.set({
+      ...profile.toMap(),
+      'uid': ref.id,
+      'role': profile.role == 'admin' ? 'admin' : 'user',
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  static Future<void> adminDeleteUser(String uid) async {
+    await _assertAdmin();
+    if (uid == _user.uid) {
+      throw FirebaseAuthException(
+        code: 'permission-denied',
+        message: 'You cannot delete your own admin profile while signed in.',
+      );
+    }
+    await _firestore.collection('users').doc(uid).delete();
+  }
+
   static Future<void> deleteProperty(Property property) async {
     await _assertOwnProperty(property.id);
     return _firestore.collection('properties').doc(property.id).update({
@@ -158,7 +308,7 @@ class FirestoreService {
       for (final id in ids) {
         final doc = await _firestore.collection('properties').doc(id).get();
         final data = doc.data();
-        if (doc.exists && data != null && data['status'] != 'deleted') {
+        if (doc.exists && data != null && data['status'] == 'active') {
           properties.add(Property.fromMap(data, doc.id));
         }
       }

@@ -197,6 +197,25 @@ class RentalProperty {
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'location': location,
+      'monthlyRent': monthlyRent,
+      'area': area,
+      'bedrooms': bedrooms,
+      'bathrooms': bathrooms,
+      'image': image,
+      'furnishing': furnishing,
+      'availableFrom': availableFrom,
+      'ownerId': ownerId,
+      'ownerName': ownerName,
+      'ownerPhone': ownerPhone,
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+  }
 }
 
 class LoanApplication {
@@ -271,15 +290,44 @@ class LoanApplication {
 }
 
 class UserProfile {
+  final String uid;
   final String username;
   final String email;
   final String phone;
+  final String role;
 
   UserProfile({
+    this.uid = '',
     required this.username,
     required this.email,
     required this.phone,
+    this.role = 'user',
   });
+
+  bool get isAdmin => role == 'admin';
+
+  factory UserProfile.fromMap(Map<String, dynamic> data, String uid) {
+    final rawRole = data['role']?.toString().trim().toLowerCase();
+    final role = rawRole == 'admin' ? 'admin' : 'user';
+    return UserProfile(
+      uid: uid,
+      username: data['username']?.toString() ?? 'User',
+      email: data['email']?.toString() ?? '',
+      phone: data['phone']?.toString() ?? '',
+      role: role,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'uid': uid,
+      'username': username,
+      'email': email,
+      'phone': phone,
+      'role': role == 'admin' ? 'admin' : 'user',
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+  }
 }
 
 class AppStore {

@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'admin_dashboard.dart';
 import 'auth_service.dart';
 import 'dashboard.dart';
 import 'login.dart';
+import 'models.dart';
 import 'verify_email.dart';
 
 class AuthGate extends StatelessWidget {
@@ -28,7 +30,7 @@ class AuthGate extends StatelessWidget {
           return VerifyEmailPage(email: user.email);
         }
 
-        return FutureBuilder<void>(
+        return FutureBuilder(
           future: AuthService.loadCurrentUserProfile(),
           builder: (context, profileSnapshot) {
             if (profileSnapshot.connectionState == ConnectionState.waiting) {
@@ -36,7 +38,9 @@ class AuthGate extends StatelessWidget {
                 body: Center(child: CircularProgressIndicator()),
               );
             }
-            return const DashboardPage();
+            return AppStore.currentUser.isAdmin
+                ? const AdminDashboardPage()
+                : const DashboardPage();
           },
         );
       },

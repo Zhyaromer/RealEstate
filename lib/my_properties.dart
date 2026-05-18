@@ -223,7 +223,7 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
                   Positioned(
                     top: 12,
                     left: 12,
-                    child: _buildStatusBadge('For Sale'),
+                    child: _buildStatusBadge(property.status),
                   ),
                 ],
               ),
@@ -358,14 +358,20 @@ class _MyPropertiesPageState extends State<MyPropertiesPage> {
   }
 
   Widget _buildStatusBadge(String label) {
+    final color = switch (label) {
+      'active' => AppStyle.success,
+      'pending' => AppStyle.accent,
+      'rejected' => AppStyle.danger,
+      _ => AppStyle.primary,
+    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: AppStyle.success,
+        color: color,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        label,
+        label == 'active' ? 'For Sale' : label,
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w700,
