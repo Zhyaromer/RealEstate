@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 import 'models.dart';
 
 class FirestoreService {
@@ -7,6 +11,7 @@ class FirestoreService {
 
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
+  static const String _imgbbApiKey = 'a28c23a38f3fe4faccad873c1aaef746';
 
   static User get _user {
     final user = _auth.currentUser;
@@ -111,6 +116,36 @@ class FirestoreService {
       ..['createdAt'] = FieldValue.serverTimestamp()
       ..['updatedAt'] = FieldValue.serverTimestamp();
     await _firestore.collection('properties').add(data);
+  }
+
+  static Future<String?> uploadImageToImgBB(Uint8List imageBytes) async {
+    final response = await http.post(
+      Uri.parse('https://api.imgbb.com/1/upload?key=$_imgbbApiKey'),
+      body: {
+        'image': base64Encode(imageBytes),
+      },
+    );
+
+    if (response.statusCode != 200) {
+      return null;
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = decoded['data'] as Map<String, dynamic>?;
+    return data?['url']?.toString();
+  }
+
+  static Future<List<String>> uploadImagesToImgBB(
+    List<Uint8List> imageBytesList,
+  ) async {
+    final urls = <String>[];
+    for (final imageBytes in imageBytesList) {
+      final url = await uploadImageToImgBB(imageBytes);
+      if (url != null && url.isNotEmpty) {
+        urls.add(url);
+      }
+    }
+    return urls;
   }
 
   static Future<void> updateProperty(Property property) async {

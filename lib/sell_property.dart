@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'app_style.dart';
 import 'auth_service.dart';
 import 'firestore_service.dart';
@@ -24,10 +27,8 @@ class SellPropertyPageState extends State<SellPropertyPage> {
   final _priceController = TextEditingController();
   final _areaController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final List<TextEditingController> _imageControllers = List.generate(
-    5,
-    (_) => TextEditingController(),
-  );
+  final List<Uint8List> _imageBytesList = [];
+  bool _isSubmitting = false;
 
   /// Selected values
   int _bedrooms = 2;
@@ -63,10 +64,25 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     _priceController.dispose();
     _areaController.dispose();
     _descriptionController.dispose();
-    for (final controller in _imageControllers) {
-      controller.dispose();
-    }
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    if (_imageBytesList.length >= 5) return;
+
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+    setState(() {
+      _imageBytesList.add(bytes);
+    });
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _imageBytesList.removeAt(index);
+    });
   }
 
   /// check prkranaway filedakan
@@ -75,14 +91,27 @@ class SellPropertyPageState extends State<SellPropertyPage> {
       return;
     }
 
+    if (_imageBytesList.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please choose at least one property image.'),
+          backgroundColor: AppStyle.danger,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
     try {
       final price = double.tryParse(_priceController.text.trim()) ?? 0;
       final area = double.tryParse(_areaController.text.trim()) ?? 0;
-      final images = _imageControllers
-          .map((controller) => controller.text.trim())
-          .where((url) => url.isNotEmpty)
-          .take(5)
-          .toList();
+      var images = <String>[];
+      try {
+        images = await FirestoreService.uploadImagesToImgBB(_imageBytesList);
+      } catch (error) {
+        debugPrint('Image upload failed, saving without image: $error');
+      }
       await FirestoreService.addProperty(
         Property(
           id: '',
@@ -92,7 +121,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
           area: area,
           bedrooms: _bedrooms,
           bathrooms: _bathrooms,
-          image: images.first,
+          image: images.isEmpty ? '' : images.first,
           images: images,
           description: _descriptionController.text.trim(),
           features: _selectedFeatures.toList(),
@@ -120,6 +149,10 @@ class SellPropertyPageState extends State<SellPropertyPage> {
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -130,10 +163,8 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     _priceController.clear();
     _areaController.clear();
     _descriptionController.clear();
-    for (final controller in _imageControllers) {
-      controller.clear();
-    }
     setState(() {
+      _imageBytesList.clear();
       _bedrooms = 2;
       _bathrooms = 1;
       _propertyType = 'Apartment';
@@ -509,21 +540,79 @@ class SellPropertyPageState extends State<SellPropertyPage> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
-        ...List.generate(_imageControllers.length, (index) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: index == _imageControllers.length - 1 ? 0 : 12,
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            ...List.generate(_imageBytesList.length, (index) {
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.memory(
+                      _imageBytesList[index],
+                      width: 92,
+                      height: 92,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: InkWell(
+                      onTap: () => _removeImage(index),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+            if (_imageBytesList.length < 5)
+              InkWell(
+                onTap: _pickImage,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  width: 92,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: const Icon(
+                    Icons.add_a_photo_outlined,
+                    color: AppStyle.primary,
+                    size: 30,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        if (_imageBytesList.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Choose at least one image from your gallery.',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            child: _buildTextField(
-              controller: _imageControllers[index],
-              label: index == 0 ? 'Image URL 1' : 'Image URL ${index + 1}',
-              hint: 'https://example.com/image.jpg',
-              icon: Icons.image_outlined,
-              keyboardType: TextInputType.url,
-              requiredField: index == 0,
-            ),
-          );
-        }),
+          ),
       ],
     );
   }
@@ -575,7 +664,7 @@ class SellPropertyPageState extends State<SellPropertyPage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _submitForm,
+        onPressed: _isSubmitting ? null : _submitForm,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppStyle.primary,
           foregroundColor: Colors.white,
@@ -585,10 +674,19 @@ class SellPropertyPageState extends State<SellPropertyPage> {
           ),
           elevation: 2,
         ),
-        child: const Text(
-          'List Property',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                'List Property',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }
