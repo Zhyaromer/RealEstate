@@ -150,6 +150,7 @@ class FirestoreService {
     return _firestore.collection('properties').snapshots().map((snapshot) {
       final properties = snapshot.docs
           .map((doc) => Property.fromMap(doc.data(), doc.id))
+          .where((property) => property.status != 'deleted')
           .toList();
       properties.sort((a, b) {
         final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -182,6 +183,7 @@ class FirestoreService {
     return _firestore.collection('rentals').snapshots().map((snapshot) {
       final rentals = snapshot.docs
           .map((doc) => RentalProperty.fromMap(doc.data(), doc.id))
+          .where((rental) => rental.status != 'deleted')
           .toList();
       rentals.sort((a, b) {
         final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -221,10 +223,7 @@ class FirestoreService {
 
   static Future<void> adminDeleteProperty(String propertyId) async {
     await _assertAdmin();
-    await _firestore.collection('properties').doc(propertyId).update({
-      'status': 'deleted',
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    await _firestore.collection('properties').doc(propertyId).delete();
   }
 
   static Future<void> adminSetPropertyStatus(String propertyId, String status) async {
@@ -253,10 +252,7 @@ class FirestoreService {
 
   static Future<void> adminDeleteRental(String rentalId) async {
     await _assertAdmin();
-    await _firestore.collection('rentals').doc(rentalId).update({
-      'status': 'deleted',
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    await _firestore.collection('rentals').doc(rentalId).delete();
   }
 
   static Future<void> adminUpsertUser(UserProfile profile) async {
@@ -286,10 +282,7 @@ class FirestoreService {
 
   static Future<void> deleteProperty(Property property) async {
     await _assertOwnProperty(property.id);
-    return _firestore.collection('properties').doc(property.id).update({
-      'status': 'deleted',
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    return _firestore.collection('properties').doc(property.id).delete();
   }
 
   static Stream<Set<String>> savedPropertyIdsStream() {

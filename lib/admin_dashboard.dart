@@ -582,6 +582,17 @@ Future<void> _showPropertyForm(BuildContext context, {Property? property}) {
   var bathrooms = property?.bathrooms ?? 1;
   var propertyType = property?.propertyType ?? 'Apartment';
   var status = property?.status ?? 'active';
+  final selectedFeatures = (property?.features.toSet() ?? {'Parking'});
+  const featureOptions = [
+    'Parking',
+    'Garden',
+    'Pool',
+    'Balcony',
+    'Security',
+    'Gym',
+    'Lift',
+    'City View',
+  ];
   final formKey = GlobalKey<FormState>();
 
   return showDialog<void>(
@@ -629,8 +640,57 @@ Future<void> _showPropertyForm(BuildContext context, {Property? property}) {
                   _stringDropdown(
                     'Status',
                     status,
-                    const ['active', 'pending', 'rejected', 'deleted'],
+                    const ['active', 'pending', 'rejected'],
                     (value) => setState(() => status = value),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'Features',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: featureOptions.map((feature) {
+                        final selected = selectedFeatures.contains(feature);
+                        return FilterChip(
+                          label: Text(feature),
+                          selected: selected,
+                          selectedColor: Colors.blue.shade50,
+                          checkmarkColor: AppStyle.primary,
+                          side: BorderSide(
+                            color: selected
+                                ? AppStyle.primary
+                                : Colors.grey.shade300,
+                          ),
+                          labelStyle: TextStyle(
+                            color: selected
+                                ? AppStyle.primary
+                                : Colors.grey.shade700,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          onSelected: (value) {
+                            setState(() {
+                              if (value) {
+                                selectedFeatures.add(feature);
+                              } else {
+                                selectedFeatures.remove(feature);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
                   ),
                   _dialogField(description, 'Description', Icons.notes_outlined,
                       maxLines: 3),
@@ -658,7 +718,7 @@ Future<void> _showPropertyForm(BuildContext context, {Property? property}) {
                 image: image.text.trim(),
                 images: [image.text.trim()],
                 description: description.text.trim(),
-                features: property?.features ?? const [],
+                features: selectedFeatures.toList(),
                 ownerName: property?.ownerName ?? AppStore.currentUser.username,
                 ownerPhone: property?.ownerPhone ?? AppStore.currentUser.phone,
                 propertyType: propertyType,
@@ -743,7 +803,7 @@ Future<void> _showRentalForm(BuildContext context, {RentalProperty? rental}) {
                   _stringDropdown(
                     'Status',
                     status,
-                    const ['active', 'deleted'],
+                    const ['active'],
                     (value) => setState(() => status = value),
                   ),
                 ],
